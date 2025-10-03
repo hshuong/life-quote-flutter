@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../models/quote.dart';
 import '../providers/quote_provider.dart';
 import '../utils/image_manager.dart';
+import '../utils/responsive.dart';
 
 class QuoteDetailScreen extends StatefulWidget {
   final List<Quote> quotes;
@@ -38,7 +39,6 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
     
     _pageController = PageController(initialPage: currentIndex);
     
-    // Animation controller
     _fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -58,7 +58,6 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
     super.dispose();
   }
 
-  // Toggle favorite
   Future<void> _toggleFavorite() async {
     final quote = quotes[currentIndex];
     final provider = context.read<QuoteProvider>();
@@ -94,7 +93,6 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
     }
   }
 
-  // Copy quote
   Future<void> _copyQuote() async {
     final quote = quotes[currentIndex];
     final textToCopy = '${quote.text}\n\n- ${quote.author}';
@@ -121,7 +119,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
     }
   }
 
-  // Share quote
+    // Share quote
   Future<void> _shareQuote() async {
     final quote = quotes[currentIndex];
     final textToShare =
@@ -151,29 +149,36 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
         elevation: 0,
         leading: IconButton(
           icon: Container(
-            padding: const EdgeInsets.all(8),
+            padding: EdgeInsets.all(Responsive.padding(context, 8)),
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.3),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.arrow_back, color: Colors.white),
+            child: Icon(
+              Icons.arrow_back,
+              color: Colors.white,
+              size: Responsive.fontSize(context, 24),
+            ),
           ),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           Center(
             child: Container(
-              margin: const EdgeInsets.only(right: 16),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              margin: EdgeInsets.only(right: Responsive.padding(context, 16)),
+              padding: EdgeInsets.symmetric(
+                horizontal: Responsive.padding(context, 12),
+                vertical: Responsive.padding(context, 6),
+              ),
               decoration: BoxDecoration(
                 color: Colors.black.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 '${currentIndex + 1}/${quotes.length}',
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white,
-                  fontSize: 14,
+                  fontSize: Responsive.fontSize(context, 14),
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -209,94 +214,103 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
       child: Container(
         decoration: decoration,
         child: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                child: Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 32),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Decorative quote icon
-                        TweenAnimationBuilder<double>(
-                          tween: Tween(begin: 0.0, end: 1.0),
-                          duration: const Duration(milliseconds: 500),
-                          curve: Curves.elasticOut,
-                          builder: (context, value, child) {
-                            return Transform.scale(scale: value, child: child);
-                          },
-                          child: Icon(
-                            Icons.format_quote_rounded,
-                            size: 56,
-                            color: textColor.withValues(alpha: 0.5),
-                          ),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: Responsive.maxContentWidth(context),
+              ),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Center(
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: Responsive.padding(context, 32),
                         ),
-                        const SizedBox(height: 24),
-                        
-                        // Quote text
-                        TweenAnimationBuilder<double>(
-                          tween: Tween(begin: 0.0, end: 1.0),
-                          duration: const Duration(milliseconds: 600),
-                          curve: Curves.easeOut,
-                          builder: (context, value, child) {
-                            return Transform.translate(
-                              offset: Offset(0, 20 * (1 - value)),
-                              child: Opacity(opacity: value, child: child),
-                            );
-                          },
-                          child: Text(
-                            quote.text,
-                            style: TextStyle(
-                              color: textColor,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w600,
-                              height: 1.5,
-                              letterSpacing: 0.3,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        
-                        const SizedBox(height: 32),
-                        
-                        // Author
-                        TweenAnimationBuilder<double>(
-                          tween: Tween(begin: 0.0, end: 1.0),
-                          duration: const Duration(milliseconds: 700),
-                          curve: Curves.easeOut,
-                          builder: (context, value, child) {
-                            return Opacity(opacity: value, child: child);
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              '- ${quote.author}',
-                              style: TextStyle(
-                                color: textColor,
-                                fontSize: 18,
-                                fontStyle: FontStyle.italic,
-                                fontWeight: FontWeight.w500,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // Decorative quote icon
+                            TweenAnimationBuilder<double>(
+                              tween: Tween(begin: 0.0, end: 1.0),
+                              duration: const Duration(milliseconds: 500),
+                              curve: Curves.elasticOut,
+                              builder: (context, value, child) {
+                                return Transform.scale(scale: value, child: child);
+                              },
+                              child: Icon(
+                                Icons.format_quote_rounded,
+                                size: Responsive.fontSize(context, 56),
+                                color: textColor.withValues(alpha: 0.5),
                               ),
-                              textAlign: TextAlign.center,
                             ),
-                          ),
+                            SizedBox(height: Responsive.padding(context, 24)),
+                            
+                            // Quote text - Responsive font size
+                            TweenAnimationBuilder<double>(
+                              tween: Tween(begin: 0.0, end: 1.0),
+                              duration: const Duration(milliseconds: 600),
+                              curve: Curves.easeOut,
+                              builder: (context, value, child) {
+                                return Transform.translate(
+                                  offset: Offset(0, 20 * (1 - value)),
+                                  child: Opacity(opacity: value, child: child),
+                                );
+                              },
+                              child: Text(
+                                quote.text,
+                                style: TextStyle(
+                                  color: textColor,
+                                  fontSize: Responsive.quoteDetailTextSize(context),
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.5,
+                                  letterSpacing: 0.3,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            
+                            SizedBox(height: Responsive.padding(context, 32)),
+                            
+                            // Author
+                            TweenAnimationBuilder<double>(
+                              tween: Tween(begin: 0.0, end: 1.0),
+                              duration: const Duration(milliseconds: 700),
+                              curve: Curves.easeOut,
+                              builder: (context, value, child) {
+                                return Opacity(opacity: value, child: child);
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: Responsive.padding(context, 20),
+                                  vertical: Responsive.padding(context, 10),
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  '- ${quote.author}',
+                                  style: TextStyle(
+                                    color: textColor,
+                                    fontSize: Responsive.fontSize(context, 18),
+                                    fontStyle: FontStyle.italic,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
+                  
+                  _buildActionButtons(quote, textColor),
+                ],
               ),
-              
-              _buildActionButtons(quote, textColor),
-            ],
+            ),
           ),
         ),
       ),
@@ -305,7 +319,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
 
   Widget _buildActionButtons(Quote quote, Color iconColor) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(Responsive.padding(context, 24)),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
@@ -355,7 +369,10 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
           onTap: onPressed,
           borderRadius: BorderRadius.circular(16),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            padding: EdgeInsets.symmetric(
+              horizontal: Responsive.padding(context, 20),
+              vertical: Responsive.padding(context, 12),
+            ),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(16),
@@ -367,13 +384,17 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, color: color, size: 28),
-                const SizedBox(height: 4),
+                Icon(
+                  icon,
+                  color: color,
+                  size: Responsive.fontSize(context, 28),
+                ),
+                SizedBox(height: Responsive.padding(context, 4)),
                 Text(
                   label,
                   style: TextStyle(
                     color: color,
-                    fontSize: 12,
+                    fontSize: Responsive.fontSize(context, 12),
                     fontWeight: FontWeight.w600,
                   ),
                 ),

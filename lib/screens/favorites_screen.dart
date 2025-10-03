@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/quote_provider.dart';
 import '../utils/image_manager.dart';
+import '../utils/responsive.dart';
 import 'quote_detail_screen.dart';
 
 class FavoritesScreen extends StatelessWidget {
@@ -18,47 +19,53 @@ class FavoritesScreen extends StatelessWidget {
         // EMPTY STATE
         if (favorites.isEmpty) {
           return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.favorite_border,
-                  size: 100,
-                  color: Colors.grey[400],
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'No Favorite Quotes Yet',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey[700],
+            child: Padding(
+              padding: EdgeInsets.all(Responsive.padding(context, 32)),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.favorite_border,
+                    size: Responsive.fontSize(context, 100),
+                    color: Colors.grey[400],
                   ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Start adding quotes to your favorites\nby tapping the heart icon ❤️',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[500],
-                    height: 1.5,
+                  SizedBox(height: Responsive.padding(context, 24)),
+                  Text(
+                    'No Favorite Quotes Yet',
+                    style: TextStyle(
+                      fontSize: Responsive.fontSize(context, 20),
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[700],
+                    ),
                   ),
-                ),
-              ],
+                  SizedBox(height: Responsive.padding(context, 12)),
+                  Text(
+                    'Start adding quotes to your favorites\nby tapping the heart icon ❤️',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: Responsive.fontSize(context, 14),
+                      color: Colors.grey[500],
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         }
 
         // SUCCESS STATE - List favorites
         return ListView.builder(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(Responsive.padding(context, 16)),
           itemCount: favorites.length,
           itemBuilder: (context, index) {
             final quote = favorites[index];
             final colors = ImageManager.getGradientForQuote(quote.id!);
+            final padding = Responsive.padding(context, 16);
+            final fontSize = Responsive.fontSize(context, 16);
+            final authorSize = Responsive.fontSize(context, 14);
+            final iconSize = Responsive.fontSize(context, 24);
 
-            // Animation cho mỗi item
             return TweenAnimationBuilder<double>(
               tween: Tween(begin: 0.0, end: 1.0),
               duration: Duration(milliseconds: 300 + (index * 30)),
@@ -80,11 +87,13 @@ class FavoritesScreen extends StatelessWidget {
                       ),
                     ),
                   );
-                  // Refresh favorites sau khi quay lại
                   provider.loadFavoriteQuotes();
                 },
                 child: Container(
-                  margin: const EdgeInsets.only(bottom: 16),
+                  margin: EdgeInsets.only(bottom: padding),
+                  constraints: BoxConstraints(
+                    minHeight: Responsive.quoteCardMinHeight(context),
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
@@ -101,7 +110,7 @@ class FavoritesScreen extends StatelessWidget {
                     ],
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.all(padding),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -110,9 +119,9 @@ class FavoritesScreen extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 quote.text,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 16,
+                                  fontSize: fontSize,
                                   fontWeight: FontWeight.w500,
                                   height: 1.4,
                                 ),
@@ -120,20 +129,20 @@ class FavoritesScreen extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            const Icon(
+                            SizedBox(width: Responsive.padding(context, 8)),
+                            Icon(
                               Icons.favorite,
                               color: Colors.white,
-                              size: 24,
+                              size: iconSize,
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: Responsive.padding(context, 8)),
                         Text(
                           '- ${quote.author}',
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.9),
-                            fontSize: 14,
+                            fontSize: authorSize,
                             fontStyle: FontStyle.italic,
                           ),
                           maxLines: 1,

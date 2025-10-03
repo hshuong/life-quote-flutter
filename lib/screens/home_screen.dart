@@ -6,6 +6,7 @@ import 'package:shimmer/shimmer.dart';
 import '../models/category.dart';
 import '../providers/quote_provider.dart';
 import '../utils/image_manager.dart';
+import '../utils/responsive.dart';
 import 'quote_list_screen.dart';
 import 'quote_detail_screen.dart';
 import 'favorites_screen.dart';
@@ -29,7 +30,6 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // Hiển thị random quote
   Future<void> _showRandomQuote() async {
     final provider = context.read<QuoteProvider>();
     final randomQuote = await provider.getRandomQuote();
@@ -47,7 +47,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     if (mounted) {
-      // Hiển thị quote trong dialog hoặc navigate to detail
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -62,24 +61,29 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Responsive: ẩn bottom nav trên tablet/desktop
+    final showBottomNav = Responsive.showBottomNav(context);
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: Text(
           _selectedIndex == 0 ? 'Life Quotes' : 'Favorites',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: Responsive.fontSize(context, 24),
+          ),
         ),
         centerTitle: true,
         backgroundColor: Colors.deepPurple,
         elevation: 0,
         actions: [
-          // Random Quote button
           IconButton(
             icon: const Icon(Icons.shuffle),
             onPressed: _showRandomQuote,
             tooltip: 'Random Quote',
+            iconSize: Responsive.fontSize(context, 24),
           ),
-          // Refresh button
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
@@ -89,17 +93,89 @@ class _HomeScreenState extends State<HomeScreen> {
               provider.loadFavoriteQuotes();
             },
             tooltip: 'Refresh',
+            iconSize: Responsive.fontSize(context, 24),
           ),
         ],
       ),
-      body: _selectedIndex == 0 ? _buildCategoriesView() : const FavoritesScreen(),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
-        selectedItemColor: Colors.deepPurple,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.category), label: 'Categories'),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favorites'),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: Responsive.maxContentWidth(context),
+          ),
+          child: _selectedIndex == 0 
+              ? _buildCategoriesView() 
+              : const FavoritesScreen(),
+        ),
+      ),
+      // Responsive: chỉ hiển thị bottom nav trên mobile
+      bottomNavigationBar: showBottomNav
+          ? BottomNavigationBar(
+              currentIndex: _selectedIndex,
+              onTap: (index) => setState(() => _selectedIndex = index),
+              selectedItemColor: Colors.deepPurple,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.category),
+                  label: 'Categories',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.favorite),
+                  label: 'Favorites',
+                ),
+              ],
+            )
+          : null,
+      // Trên tablet: dùng navigation rail bên trái
+      drawer: !showBottomNav ? _buildDrawer() : null,
+    );
+  }
+
+  // Drawer cho tablet/desktop
+  Widget _buildDrawer() {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: const BoxDecoration(color: Colors.deepPurple),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: const [
+                Text(
+                  'Life Quotes',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Inspire your day',
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.category),
+            title: const Text('Categories'),
+            selected: _selectedIndex == 0,
+            onTap: () {
+              setState(() => _selectedIndex = 0);
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.favorite),
+            title: const Text('Favorites'),
+            selected: _selectedIndex == 1,
+            onTap: () {
+              setState(() => _selectedIndex = 1);
+              Navigator.pop(context);
+            },
+          ),
         ],
       ),
     );
@@ -125,30 +201,42 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildErrorState(QuoteProvider provider) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: EdgeInsets.all(Responsive.padding(context, 32)),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 64, color: Colors.red),
-            const SizedBox(height: 16),
-            const Text(
-              'Oops! Something went wrong',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Icon(Icons.error_outline, 
+              size: Responsive.fontSize(context, 64), 
+              color: Colors.red,
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: Responsive.padding(context, 16)),
+            Text(
+              'Oops! Something went wrong',
+              style: TextStyle(
+                fontSize: Responsive.fontSize(context, 18),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: Responsive.padding(context, 8)),
             Text(
               provider.error!,
-              style: const TextStyle(color: Colors.grey),
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: Responsive.fontSize(context, 14),
+              ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: Responsive.padding(context, 24)),
             ElevatedButton.icon(
               onPressed: () {
                 provider.clearCache();
                 provider.loadCategories();
               },
               icon: const Icon(Icons.refresh),
-              label: const Text('Try Again'),
+              label: Text(
+                'Try Again',
+                style: TextStyle(fontSize: Responsive.fontSize(context, 14)),
+              ),
             ),
           ],
         ),
@@ -157,16 +245,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildLoadingState() {
+    final spacing = Responsive.gridSpacing(context);
+    final columns = Responsive.gridColumns(context);
+    
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(Responsive.padding(context, 16)),
       child: GridView.builder(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 1.2,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: columns,
+          crossAxisSpacing: spacing,
+          mainAxisSpacing: spacing,
+          childAspectRatio: Responsive.categoryCardAspectRatio(context),
         ),
-        itemCount: 6,
+        itemCount: 8,
         itemBuilder: (context, index) {
           return Shimmer.fromColors(
             baseColor: Colors.grey[300]!,
@@ -188,11 +279,18 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.category_outlined, size: 80, color: Colors.grey[400]),
-          const SizedBox(height: 16),
+          Icon(
+            Icons.category_outlined,
+            size: Responsive.fontSize(context, 80),
+            color: Colors.grey[400],
+          ),
+          SizedBox(height: Responsive.padding(context, 16)),
           Text(
             'No categories available',
-            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+            style: TextStyle(
+              fontSize: Responsive.fontSize(context, 18),
+              color: Colors.grey[600],
+            ),
           ),
         ],
       ),
@@ -200,14 +298,18 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCategoriesGrid(List<Category> categories) {
+    final spacing = Responsive.gridSpacing(context);
+    final columns = Responsive.gridColumns(context);
+    final padding = Responsive.padding(context, 16);
+    
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(padding),
       child: GridView.builder(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 1.2,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: columns,
+          crossAxisSpacing: spacing,
+          mainAxisSpacing: spacing,
+          childAspectRatio: Responsive.categoryCardAspectRatio(context),
         ),
         itemCount: categories.length,
         itemBuilder: (context, index) {
@@ -231,6 +333,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildCategoryCard(Category category) {
     final colors = ImageManager.getColorsForCategory(category.name);
+    final iconSize = Responsive.fontSize(context, 48);
+    final textSize = Responsive.fontSize(context, 18);
 
     return Hero(
       tag: 'category_${category.id}',
@@ -256,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: colors[0].withValues(alpha: 0.4), 
+                  color: colors[0].withValues(alpha: 0.4),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -267,17 +371,24 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Text(
                   category.icon,
-                  style: const TextStyle(fontSize: 48),
+                  style: TextStyle(fontSize: iconSize),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  category.name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                SizedBox(height: Responsive.padding(context, 12)),
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: Responsive.padding(context, 8),
                   ),
-                  textAlign: TextAlign.center,
+                  child: Text(
+                    category.name,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: textSize,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),

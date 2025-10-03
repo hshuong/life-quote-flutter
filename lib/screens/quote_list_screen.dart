@@ -7,6 +7,7 @@ import '../models/category.dart';
 import '../models/quote.dart';
 import '../providers/quote_provider.dart';
 import '../utils/image_manager.dart';
+import '../utils/responsive.dart';
 import 'quote_detail_screen.dart';
 
 class QuoteListScreen extends StatefulWidget {
@@ -38,7 +39,6 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
     super.dispose();
   }
 
-  // Thực hiện tìm kiếm
   Future<void> _performSearch(String query) async {
     if (query.isEmpty) {
       setState(() {
@@ -48,9 +48,7 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
       return;
     }
 
-    setState(() {
-      _isSearchLoading = true;
-    });
+    setState(() => _isSearchLoading = true);
 
     final provider = context.read<QuoteProvider>();
     final results = await provider.searchQuotes(query);
@@ -71,7 +69,6 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
         backgroundColor: Colors.deepPurple,
         elevation: 0,
         actions: [
-          // Toggle search icon
           IconButton(
             icon: Icon(_isSearching ? Icons.close : Icons.search),
             onPressed: () {
@@ -83,41 +80,61 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
                 }
               });
             },
+            iconSize: Responsive.fontSize(context, 24),
           ),
         ],
       ),
-      body: _isSearching ? _buildSearchResults() : _buildQuotesList(),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: Responsive.maxContentWidth(context),
+          ),
+          child: _isSearching ? _buildSearchResults() : _buildQuotesList(),
+        ),
+      ),
     );
   }
 
-  // Build title với category info
   Widget _buildTitle() {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(widget.category.icon, style: const TextStyle(fontSize: 24)),
-        const SizedBox(width: 8),
         Text(
-          widget.category.name,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          widget.category.icon,
+          style: TextStyle(fontSize: Responsive.fontSize(context, 24)),
+        ),
+        SizedBox(width: Responsive.padding(context, 8)),
+        Flexible(
+          child: Text(
+            widget.category.name,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: Responsive.fontSize(context, 20),
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );
   }
 
-  // Build search text field
   Widget _buildSearchField() {
     return TextField(
       controller: _searchController,
       autofocus: true,
-      style: const TextStyle(color: Colors.white),
-      decoration: const InputDecoration(
+      style: TextStyle(
+        color: Colors.white,
+        fontSize: Responsive.fontSize(context, 16),
+      ),
+      decoration: InputDecoration(
         hintText: 'Search quotes...',
-        hintStyle: TextStyle(color: Colors.white70),
+        hintStyle: TextStyle(
+          color: Colors.white70,
+          fontSize: Responsive.fontSize(context, 16),
+        ),
         border: InputBorder.none,
       ),
       onChanged: (value) {
-        // Debounce search
         Future.delayed(const Duration(milliseconds: 500), () {
           if (_searchController.text == value) {
             _performSearch(value);
@@ -127,7 +144,6 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
     );
   }
 
-  // Build search results
   Widget _buildSearchResults() {
     if (_isSearchLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -138,11 +154,18 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.search, size: 80, color: Colors.grey[400]),
-            const SizedBox(height: 16),
+            Icon(
+              Icons.search,
+              size: Responsive.fontSize(context, 80),
+              color: Colors.grey[400],
+            ),
+            SizedBox(height: Responsive.padding(context, 16)),
             Text(
               'Search for quotes',
-              style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+              style: TextStyle(
+                fontSize: Responsive.fontSize(context, 18),
+                color: Colors.grey[600],
+              ),
             ),
           ],
         ),
@@ -154,25 +177,34 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.search_off, size: 80, color: Colors.grey[400]),
-            const SizedBox(height: 16),
+            Icon(
+              Icons.search_off,
+              size: Responsive.fontSize(context, 80),
+              color: Colors.grey[400],
+            ),
+            SizedBox(height: Responsive.padding(context, 16)),
             Text(
               'No results found',
-              style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+              style: TextStyle(
+                fontSize: Responsive.fontSize(context, 18),
+                color: Colors.grey[600],
+              ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: Responsive.padding(context, 8)),
             Text(
               'Try different keywords',
-              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+              style: TextStyle(
+                fontSize: Responsive.fontSize(context, 14),
+                color: Colors.grey[500],
+              ),
             ),
           ],
         ),
       );
     }
 
-    // Hiển thị kết quả tìm kiếm
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(Responsive.padding(context, 16)),
       itemCount: _searchResults.length,
       itemBuilder: (context, index) {
         return _buildQuoteCard(_searchResults[index], index, _searchResults);
@@ -180,29 +212,30 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
     );
   }
 
-  // Build danh sách quotes chính
   Widget _buildQuotesList() {
     return Consumer<QuoteProvider>(
       builder: (context, provider, child) {
-        // LOADING STATE
         if (provider.isLoadingQuotes) {
           return _buildShimmerLoading();
         }
 
         final quotes = provider.getQuotesForCategory(widget.category.id!);
 
-        // EMPTY STATE
         if (quotes.isEmpty) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.format_quote, size: 80, color: Colors.grey[400]),
-                const SizedBox(height: 24),
+                Icon(
+                  Icons.format_quote,
+                  size: Responsive.fontSize(context, 80),
+                  color: Colors.grey[400],
+                ),
+                SizedBox(height: Responsive.padding(context, 24)),
                 Text(
                   'No quotes available',
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: Responsive.fontSize(context, 20),
                     fontWeight: FontWeight.bold,
                     color: Colors.grey[700],
                   ),
@@ -212,14 +245,13 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
           );
         }
 
-        // SUCCESS STATE
         return RefreshIndicator(
           onRefresh: () async {
             provider.clearCache();
             await provider.loadQuotesForCategory(widget.category.id!);
           },
           child: ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(Responsive.padding(context, 16)),
             itemCount: quotes.length,
             itemBuilder: (context, index) {
               return _buildQuoteCard(quotes[index], index, quotes);
@@ -230,18 +262,20 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
     );
   }
 
-  // Shimmer loading
   Widget _buildShimmerLoading() {
+    final minHeight = Responsive.quoteCardMinHeight(context);
+    final padding = Responsive.padding(context, 16);
+
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(padding),
       itemCount: 8,
       itemBuilder: (context, index) {
         return Shimmer.fromColors(
           baseColor: Colors.grey[300]!,
           highlightColor: Colors.grey[100]!,
           child: Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            height: 100,
+            margin: EdgeInsets.only(bottom: padding),
+            height: minHeight,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
@@ -252,9 +286,11 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
     );
   }
 
-  // Build quote card
   Widget _buildQuoteCard(Quote quote, int index, List<Quote> quotes) {
     final colors = ImageManager.getGradientForQuote(quote.id!);
+    final padding = Responsive.padding(context, 16);
+    final fontSize = Responsive.fontSize(context, 16);
+    final authorSize = Responsive.fontSize(context, 14);
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
@@ -271,15 +307,16 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
           await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => QuoteDetailScreen(
-                quotes: quotes,
-                initialIndex: index,
-              ),
+              builder: (context) =>
+                  QuoteDetailScreen(quotes: quotes, initialIndex: index),
             ),
           );
         },
         child: Container(
-          margin: const EdgeInsets.only(bottom: 16),
+          margin: EdgeInsets.only(bottom: padding),
+          constraints: BoxConstraints(
+            minHeight: Responsive.quoteCardMinHeight(context),
+          ),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -296,22 +333,22 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(padding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   quote.text,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
+                    fontSize: fontSize,
                     fontWeight: FontWeight.w500,
                     height: 1.4,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: Responsive.padding(context, 8)),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -320,7 +357,7 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
                         '- ${quote.author}',
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.9),
-                          fontSize: 14,
+                          fontSize: authorSize,
                           fontStyle: FontStyle.italic,
                         ),
                         maxLines: 1,
@@ -328,10 +365,10 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
                       ),
                     ),
                     if (quote.isFavorite)
-                      const Icon(
+                      Icon(
                         Icons.favorite,
                         color: Colors.white,
-                        size: 20,
+                        size: Responsive.fontSize(context, 20),
                       ),
                   ],
                 ),
