@@ -72,6 +72,9 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
         centerTitle: true,
         backgroundColor: Colors.deepPurple,
         elevation: 0,
+        iconTheme: IconThemeData(
+          color: Colors.white, // Màu cho tất cả các icon trong AppBar
+        ),
         actions: [
           // Search button
           IconButton(
