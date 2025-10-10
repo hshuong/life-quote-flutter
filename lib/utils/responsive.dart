@@ -98,7 +98,7 @@ class Responsive {
     if (w < mobileSmall) return 90;
     if (w < mobile) return 100;
     if (w < tablet) return 110;
-    return 120;
+    return 110;
   }
 
   /// Detail screen text size

@@ -119,7 +119,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
     }
   }
 
-    // Share quote
+  // Share quote
   Future<void> _shareQuote() async {
     final quote = quotes[currentIndex];
     final textToShare =
@@ -151,7 +151,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
           icon: Container(
             padding: EdgeInsets.all(Responsive.padding(context, 8)),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.3),
+              color: Colors.black.withValues(alpha: 0.3), 
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -171,7 +171,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
                 vertical: Responsive.padding(context, 6),
               ),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.3),
+                color: Colors.black.withValues(alpha: 0.3), 
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -186,21 +186,37 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
           ),
         ],
       ),
-      body: PageView.builder(
-        controller: _pageController,
-        itemCount: quotes.length,
-        onPageChanged: (index) {
-          setState(() {
-            currentIndex = index;
-          });
-          _fadeController.reset();
-          _fadeController.forward();
-          HapticFeedback.selectionClick();
-        },
-        itemBuilder: (context, index) {
-          final quote = quotes[index];
-          return _buildQuotePage(quote);
-        },
+      // CRITICAL: Tách body thành Stack với PageView và Action Buttons cố định
+      body: Stack(
+        children: [
+          // PageView - chiếm toàn bộ màn hình
+          PageView.builder(
+            controller: _pageController,
+            itemCount: quotes.length,
+            onPageChanged: (index) {
+              setState(() {
+                currentIndex = index;
+              });
+              _fadeController.reset();
+              _fadeController.forward();
+              HapticFeedback.selectionClick();
+            },
+            itemBuilder: (context, index) {
+              final quote = quotes[index];
+              return _buildQuotePage(quote);
+            },
+          ),
+          
+          // Action Buttons - CỐ ĐỊNH Ở DƯỚI, không di chuyển
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: SafeArea(
+              child: _buildActionButtons(quotes[currentIndex]),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -219,96 +235,89 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
               constraints: BoxConstraints(
                 maxWidth: Responsive.maxContentWidth(context),
               ),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: Center(
-                      child: SingleChildScrollView(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: Responsive.padding(context, 32),
+              // CRITICAL: Chỉ hiển thị quote content, KHÔNG bao gồm action buttons
+              child: SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  left: Responsive.padding(context, 32),
+                  right: Responsive.padding(context, 32),
+                  bottom: Responsive.padding(context, 120), // Để không bị che bởi buttons
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Decorative quote icon
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      duration: const Duration(milliseconds: 500),
+                      curve: Curves.elasticOut,
+                      builder: (context, value, child) {
+                        return Transform.scale(scale: value, child: child);
+                      },
+                      child: Icon(
+                        Icons.format_quote_rounded,
+                        size: Responsive.fontSize(context, 56),
+                        color: textColor.withValues(alpha: 0.5), 
+                      ),
+                    ),
+                    SizedBox(height: Responsive.padding(context, 24)),
+                    
+                    // Quote text - Responsive font size
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      duration: const Duration(milliseconds: 600),
+                      curve: Curves.easeOut,
+                      builder: (context, value, child) {
+                        return Transform.translate(
+                          offset: Offset(0, 20 * (1 - value)),
+                          child: Opacity(opacity: value, child: child),
+                        );
+                      },
+                      child: Text(
+                        quote.text,
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: Responsive.quoteDetailTextSize(context),
+                          fontWeight: FontWeight.w600,
+                          height: 1.5,
+                          letterSpacing: 0.3,
                         ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            // Decorative quote icon
-                            TweenAnimationBuilder<double>(
-                              tween: Tween(begin: 0.0, end: 1.0),
-                              duration: const Duration(milliseconds: 500),
-                              curve: Curves.elasticOut,
-                              builder: (context, value, child) {
-                                return Transform.scale(scale: value, child: child);
-                              },
-                              child: Icon(
-                                Icons.format_quote_rounded,
-                                size: Responsive.fontSize(context, 56),
-                                color: textColor.withValues(alpha: 0.5),
-                              ),
-                            ),
-                            SizedBox(height: Responsive.padding(context, 24)),
-                            
-                            // Quote text - Responsive font size
-                            TweenAnimationBuilder<double>(
-                              tween: Tween(begin: 0.0, end: 1.0),
-                              duration: const Duration(milliseconds: 600),
-                              curve: Curves.easeOut,
-                              builder: (context, value, child) {
-                                return Transform.translate(
-                                  offset: Offset(0, 20 * (1 - value)),
-                                  child: Opacity(opacity: value, child: child),
-                                );
-                              },
-                              child: Text(
-                                quote.text,
-                                style: TextStyle(
-                                  color: textColor,
-                                  fontSize: Responsive.quoteDetailTextSize(context),
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.5,
-                                  letterSpacing: 0.3,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            
-                            SizedBox(height: Responsive.padding(context, 32)),
-                            
-                            // Author
-                            TweenAnimationBuilder<double>(
-                              tween: Tween(begin: 0.0, end: 1.0),
-                              duration: const Duration(milliseconds: 700),
-                              curve: Curves.easeOut,
-                              builder: (context, value, child) {
-                                return Opacity(opacity: value, child: child);
-                              },
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: Responsive.padding(context, 20),
-                                  vertical: Responsive.padding(context, 10),
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  '- ${quote.author}',
-                                  style: TextStyle(
-                                    color: textColor,
-                                    fontSize: Responsive.fontSize(context, 18),
-                                    fontStyle: FontStyle.italic,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            ),
-                          ],
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    
+                    SizedBox(height: Responsive.padding(context, 32)),
+                    
+                    // Author
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      duration: const Duration(milliseconds: 700),
+                      curve: Curves.easeOut,
+                      builder: (context, value, child) {
+                        return Opacity(opacity: value, child: child);
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: Responsive.padding(context, 20),
+                          vertical: Responsive.padding(context, 10),
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2), 
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '- ${quote.author}',
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: Responsive.fontSize(context, 18),
+                            fontStyle: FontStyle.italic,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
                       ),
                     ),
-                  ),
-                  
-                  _buildActionButtons(quote, textColor),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -317,8 +326,22 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
     );
   }
 
-  Widget _buildActionButtons(Quote quote, Color iconColor) {
+  // Build action buttons - CỐ ĐỊNH, không di chuyển theo page
+  Widget _buildActionButtons(Quote quote) {
+    ImageManager.getTextColor(quote.id!);
+    
     return Container(
+      // Semi-transparent background để nổi bật trên mọi gradient
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.transparent,
+            Colors.black.withValues(alpha: 0.3), 
+          ],
+        ),
+      ),
       padding: EdgeInsets.all(Responsive.padding(context, 24)),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -326,14 +349,14 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
           _buildActionButton(
             icon: Icons.share_rounded,
             label: 'Share',
-            color: iconColor,
+            color: Colors.white, // Fixed color để luôn thấy rõ
             onPressed: _shareQuote,
           ),
           
           _buildActionButton(
             icon: quote.isFavorite ? Icons.favorite : Icons.favorite_border,
             label: quote.isFavorite ? 'Saved' : 'Save',
-            color: quote.isFavorite ? Colors.red : iconColor,
+            color: quote.isFavorite ? Colors.red : Colors.white,
             onPressed: _toggleFavorite,
             scale: quote.isFavorite ? 1.1 : 1.0,
           ),
@@ -341,7 +364,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
           _buildActionButton(
             icon: Icons.content_copy_rounded,
             label: 'Copy',
-            color: iconColor,
+            color: Colors.white,
             onPressed: _copyQuote,
           ),
         ],
@@ -374,10 +397,10 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
               vertical: Responsive.padding(context, 12),
             ),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
+              color: Colors.white.withValues(alpha: 0.3), 
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.3),
+                color: Colors.white.withValues(alpha: 0.3), 
                 width: 1.5,
               ),
             ),
