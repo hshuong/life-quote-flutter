@@ -51,7 +51,7 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
     final results = allQuotes.where((quote) {
       final searchLower = query.toLowerCase();
       final textMatch = quote.text.toLowerCase().contains(searchLower);
-      final authorMatch = quote.author?.toLowerCase().contains(searchLower) ?? false;
+      final authorMatch = quote.author.toLowerCase().contains(searchLower);
       return textMatch || authorMatch;
     }).toList();
 

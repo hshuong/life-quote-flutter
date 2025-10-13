@@ -1,10 +1,9 @@
 // lib/screens/favorites_screen.dart
-// ENHANCED với 3-color gradients
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/quote_provider.dart';
-import '../utils/image_manager_enhanced.dart'; // 🎨 CHANGED: Import enhanced version
+import '../utils/image_manager.dart';
 import '../utils/responsive.dart';
 import 'quote_detail_screen.dart';
 
@@ -55,13 +54,13 @@ class FavoritesScreen extends StatelessWidget {
           );
         }
 
-        // SUCCESS STATE - List favorites with 3-color gradients
+        // SUCCESS STATE - List favorites
         return ListView.builder(
           padding: EdgeInsets.all(Responsive.padding(context, 16)),
           itemCount: favorites.length,
           itemBuilder: (context, index) {
             final quote = favorites[index];
-            final colors = ImageManagerEnhanced.getGradientForQuote(quote.id!); // 🎨 CHANGED
+            final colors = ImageManager.getGradientForQuote(quote.id!);
             final padding = Responsive.padding(context, 16);
             final fontSize = Responsive.fontSize(context, 16);
             final authorSize = Responsive.fontSize(context, 14);
@@ -100,7 +99,6 @@ class FavoritesScreen extends StatelessWidget {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: colors,
-                      stops: const [0.0, 0.5, 1.0], // 🎨 CHANGED: 3 stops for 3 colors
                     ),
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [

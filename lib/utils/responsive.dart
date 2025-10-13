@@ -6,12 +6,13 @@ import 'package:flutter/material.dart';
 /// Hỗ trợ tất cả loại màn hình: phone, fold, flip, tablet
 class Responsive {
   /// Breakpoints cho các loại màn hình
-  static const double mobileSmall = 320;  // Phone nhỏ (iPhone SE, Samsung Galaxy Flip khi gập)
-  static const double mobile = 375;        // Phone thông thường
-  static const double mobileLarge = 428;   // Phone lớn (iPhone Pro Max)
-  static const double foldUnfolded = 512;  // Fold phone khi mở (Galaxy Z Fold)
-  static const double tablet = 768;        // Tablet
-  static const double desktop = 1024;      // Desktop/Tablet lớn
+  static const double mobileSmall =
+      320; // Phone nhỏ (iPhone SE, Samsung Galaxy Flip khi gập)
+  static const double mobile = 375; // Phone thông thường
+  static const double mobileLarge = 428; // Phone lớn (iPhone Pro Max)
+  static const double foldUnfolded = 512; // Fold phone khi mở (Galaxy Z Fold)
+  static const double tablet = 768; // Tablet
+  static const double desktop = 1024; // Desktop/Tablet lớn
 
   /// Lấy chiều rộng màn hình
   static double width(BuildContext context) {
@@ -47,21 +48,21 @@ class Responsive {
   /// Lấy số cột cho grid dựa trên màn hình
   static int gridColumns(BuildContext context) {
     final w = width(context);
-    if (w < mobile) return 2;              // Phone nhỏ: 2 cột
-    if (w < foldUnfolded) return 2;        // Phone: 2 cột
-    if (w < tablet) return 3;              // Fold mở: 3 cột
-    if (w < desktop) return 4;             // Tablet: 4 cột
-    return 5;                              // Desktop: 5 cột
+    if (w < mobile) return 2; // Phone nhỏ: 2 cột
+    if (w < foldUnfolded) return 2; // Phone: 2 cột
+    if (w < tablet) return 3; // Fold mở: 3 cột
+    if (w < desktop) return 4; // Tablet: 4 cột
+    return 5; // Desktop: 5 cột
   }
 
   /// Font size responsive
   static double fontSize(BuildContext context, double baseSize) {
     final w = width(context);
-    if (w < mobileSmall) return baseSize * 0.85;  // Giảm 15% cho màn hình rất nhỏ
-    if (w < mobile) return baseSize * 0.9;        // Giảm 10%
-    if (w < tablet) return baseSize;              // Size gốc
-    if (w < desktop) return baseSize * 1.1;       // Tăng 10% cho tablet
-    return baseSize * 1.2;                        // Tăng 20% cho desktop
+    if (w < mobileSmall) return baseSize * 0.85; // Giảm 15% cho màn hình rất nhỏ
+    if (w < mobile) return baseSize * 0.9; // Giảm 10%
+    if (w < tablet) return baseSize; // Size gốc
+    if (w < desktop) return baseSize * 1.1; // Tăng 10% cho tablet
+    return baseSize * 1.2; // Tăng 20% cho desktop
   }
 
   /// Padding responsive
@@ -85,11 +86,60 @@ class Responsive {
   }
 
   /// Card aspect ratio cho category cards
+  /// Đổi thành chiều cao > chiều rộng (portrait card)
   static double categoryCardAspectRatio(BuildContext context) {
     final w = width(context);
-    if (w < mobileSmall) return 1.0;   // Vuông hơn cho màn hình nhỏ
-    if (w < tablet) return 1.2;        // Phone/Fold
-    return 1.3;                        // Tablet/Desktop
+    if (w < mobileSmall) return 0.95; // Tỷ lệ rộng:cao = 0.7 (card cao hơn)
+    if (w < mobile) return 0.96; // Card hơi cao. Màn ngoài fold 5
+    if (w < tablet) return 1; // Phone/Fold Màn trong fold 5
+    return 1; // Tablet/Desktop
+  }
+
+  /// Card title style với line height tốt hơn
+
+  // Style cho title bình thường
+  static TextStyle categoryCardTitleStyle(BuildContext context) {
+    return TextStyle(
+      color: Colors.white,
+      fontSize: categoryCardTitleSize(context),
+      fontWeight: FontWeight.bold,
+      height: 1.6,
+    );
+  }
+
+  // Style cho title highlight (nếu cần)
+  static TextStyle categoryCardTitleStyleHighlight(BuildContext context) {
+    return categoryCardTitleStyle(context).copyWith(
+      color: Colors.yellow,
+      shadows: [Shadow(blurRadius: 10, color: Colors.black)],
+    );
+  }
+
+  // Style cho subtitle (nếu cần)
+  static TextStyle categoryCardSubtitleStyle(BuildContext context) {
+    return TextStyle(
+      color: Colors.white70,
+      fontSize: categoryCardTitleSize(context) * 0.8,
+      height: 1.3,
+    );
+  }
+
+  /// Card title font size (giảm để fit 2 dòng)
+  static double categoryCardTitleSize(BuildContext context) {
+    final w = width(context);
+    if (w < mobileSmall) return 14;
+    if (w < mobile) return 15;
+    if (w < tablet) return 16;
+    return 17;
+  }
+
+  /// Card icon size
+  static double categoryCardIconSize(BuildContext context) {
+    final w = width(context);
+    if (w < mobileSmall) return 40;
+    if (w < mobile) return 42;
+    if (w < tablet) return 44;
+    return 48;
   }
 
   /// Quote card height
@@ -98,7 +148,7 @@ class Responsive {
     if (w < mobileSmall) return 90;
     if (w < mobile) return 100;
     if (w < tablet) return 110;
-    return 110;
+    return 120;
   }
 
   /// Detail screen text size
@@ -120,9 +170,9 @@ class Responsive {
   /// Max width cho content (tránh quá rộng trên màn hình lớn)
   static double maxContentWidth(BuildContext context) {
     final w = width(context);
-    if (w < tablet) return w;           // Phone: full width
-    if (w < desktop) return w * 0.9;    // Tablet: 90%
-    return 1200;                        // Desktop: max 1200px
+    if (w < tablet) return w; // Phone: full width
+    if (w < desktop) return w * 0.9; // Tablet: 90%
+    return 1200; // Desktop: max 1200px
   }
 
   /// Orientation check
