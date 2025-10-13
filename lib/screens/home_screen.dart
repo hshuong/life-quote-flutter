@@ -1,5 +1,5 @@
 // lib/screens/home_screen.dart
-// ENHANCED với Horizontal Quote Pager
+// ENHANCED với Horizontal Quote Pager (đã sửa để phù hợp với grid, "Quote of the Day" không có nền, và đổ bóng đồng nhất với grid cards)
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -12,9 +12,9 @@ import '../utils/responsive.dart';
 import 'quote_list_screen.dart';
 import 'quote_detail_screen.dart';
 import 'favorites_screen.dart';
-import 'dart:math' as math;
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends StatefulWidget 
+{
   const HomeScreen({super.key});
 
   @override
@@ -33,13 +33,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   // Animation controller
   late AnimationController _gradientAnimationController;
   
-  // 🎨 NEW: Horizontal Pager state
+  // Horizontal Pager state
   late PageController _quotePagerController;
   int _currentQuotePage = 0;
   List<Quote> _randomQuotes = [];
   bool _isLoadingRandomQuotes = true;
   
-  // 🎨 NEW: For infinite scroll
+  // For infinite scroll
   static const int _quotesPoolSize = 20; // Load 20 quotes for smooth infinite scroll
   bool _isLoadingMoreQuotes = false;
 
@@ -52,15 +52,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       duration: const Duration(seconds: 3),
     )..repeat(reverse: true);
     
-    // 🎨 NEW: Initialize PageController for horizontal pager
+    // Initialize PageController for horizontal pager
     _quotePagerController = PageController(
-      viewportFraction: 0.9, // Show a bit of next/previous card
+      viewportFraction: 1.0, // Full width to match grid card
     );
     
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<QuoteProvider>().loadCategories();
       context.read<QuoteProvider>().loadFavoriteQuotes();
-      _loadRandomQuotesForPager(); // 🎨 NEW: Load random quotes
+      _loadRandomQuotesForPager();
     });
   }
 
@@ -68,11 +68,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void dispose() {
     _searchController.dispose();
     _gradientAnimationController.dispose();
-    _quotePagerController.dispose(); // 🎨 NEW
+    _quotePagerController.dispose();
     super.dispose();
   }
 
-  // 🎨 NEW: Load random quotes for horizontal pager (20 quotes for infinite scroll)
+  // Load random quotes for horizontal pager (20 quotes for infinite scroll)
   Future<void> _loadRandomQuotesForPager() async {
     setState(() => _isLoadingRandomQuotes = true);
     
@@ -95,16 +95,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
-  // 🎨 NEW: Load more quotes when approaching end (for infinite scroll)
+  // Load more quotes when approaching end (for infinite scroll)
   Future<void> _loadMoreQuotesIfNeeded(int currentPage) async {
-    // If user is near the end (last 5 quotes), load more
     if (currentPage >= _randomQuotes.length - 5 && !_isLoadingMoreQuotes) {
       setState(() => _isLoadingMoreQuotes = true);
       
       final provider = context.read<QuoteProvider>();
       final newQuotes = <Quote>[];
       
-      // Load 10 more quotes
       for (int i = 0; i < 10; i++) {
         final randomQuote = await provider.getRandomQuote();
         if (randomQuote != null) {
@@ -143,35 +141,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
-  Future<void> _showRandomQuote() async {
-    final provider = context.read<QuoteProvider>();
-    final randomQuote = await provider.getRandomQuote();
-
-    if (randomQuote == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No quotes available'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-      return;
-    }
-
-    if (mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => QuoteDetailScreen(
-            quotes: [randomQuote],
-            initialIndex: 0,
-          ),
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final showBottomNav = Responsive.showBottomNav(context);
@@ -184,7 +153,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         backgroundColor: Colors.deepPurple,
         elevation: 0,
         actions: [
-          // 🎨 CHANGED: Chỉ giữ lại nút Search
           IconButton(
             icon: Icon(_isSearching ? Icons.close : Icons.search),
             onPressed: () {
@@ -528,7 +496,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // 🎨 ENHANCED: Categories view with Horizontal Quote Pager scrollable inside
+  // Categories view with Horizontal Quote Pager scrollable inside
   Widget _buildCategoriesView() {
     return Consumer<QuoteProvider>(
       builder: (context, provider, child) {
@@ -542,13 +510,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           return _buildEmptyState();
         }
         
-        // 🎨 NEW: Single scrollable view with Pager + Grid
         return _buildScrollableCategoriesWithPager(provider.categories);
       },
     );
   }
 
-  // 🎨 NEW: Scrollable content with Pager inside
+  // Scrollable content with Pager inside
   Widget _buildScrollableCategoriesWithPager(List<Category> categories) {
     final spacing = Responsive.gridSpacing(context);
     final columns = Responsive.gridColumns(context);
@@ -556,12 +523,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     
     return CustomScrollView(
       slivers: [
-        // 🎨 Horizontal Quote Pager as first sliver
         SliverToBoxAdapter(
           child: _buildHorizontalQuotePager(),
         ),
         
-        // 🎨 Categories Grid
         SliverPadding(
           padding: EdgeInsets.all(padding),
           sliver: SliverGrid(
@@ -595,29 +560,77 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // 🎨 NEW: Horizontal Quote Pager Widget
+  // Horizontal Quote Pager Widget with consistent sizing and shadow
   Widget _buildHorizontalQuotePager() {
-    final pagerHeight = Responsive.isMobile(context) ? 200.0 : 240.0;
     final padding = Responsive.padding(context, 16);
+    final spacing = Responsive.gridSpacing(context);
+    final columns = Responsive.gridColumns(context);
     
-    return Container(
-      height: pagerHeight,
-      margin: EdgeInsets.only(
-        top: padding,      // 🎨 CHANGED: Đồng nhất spacing
-        bottom: padding,   // 🎨 CHANGED: Đồng nhất spacing
-      ),
-      child: _isLoadingRandomQuotes
-          ? _buildPagerLoadingState()
-          : _randomQuotes.isEmpty
-              ? _buildPagerEmptyState()
-              : _buildPagerContent(),
+    // Calculate pager height and width based on category card
+    final screenWidth = MediaQuery.of(context).size.width;
+    final maxWidth = Responsive.maxContentWidth(context);
+    final contentWidth = screenWidth < maxWidth ? screenWidth : maxWidth;
+    final availableWidth = contentWidth - (padding * 2);
+    final cardWidth = (availableWidth - (spacing * (columns - 1))) / columns;
+    final aspectRatio = Responsive.categoryCardAspectRatio(context);
+    final pagerHeight = cardWidth / aspectRatio;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // "Quote of the Day" as plain text
+        Padding(
+          padding: EdgeInsets.only(
+            left: padding,
+            right: padding,
+            top: padding,
+          ),
+          child: Text(
+            'Quote of the Day',
+            style: TextStyle(
+              color: Colors.black87,
+              fontSize: Responsive.fontSize(context, 16),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        
+        SizedBox(height: spacing),
+        
+        // Horizontal Pager with width matching a single grid card
+        Container(
+          height: pagerHeight,
+          padding: EdgeInsets.symmetric(horizontal: padding),
+          child: _isLoadingRandomQuotes
+              ? _buildPagerLoadingState()
+              : _randomQuotes.isEmpty
+                  ? _buildPagerEmptyState()
+                  : _buildPagerContentClean(),
+        ),
+        
+        SizedBox(height: spacing),
+        
+        if (!_isLoadingRandomQuotes && _randomQuotes.isNotEmpty)
+          _buildPageIndicators(),
+        
+        SizedBox(height: spacing),
+      ],
     );
   }
 
-  // 🎨 NEW: Pager loading state
+  // Pager loading state with consistent shadow
   Widget _buildPagerLoadingState() {
+    final columns = Responsive.gridColumns(context);
+    final spacing = Responsive.gridSpacing(context);
+    final padding = Responsive.padding(context, 16);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final maxWidth = Responsive.maxContentWidth(context);
+    final contentWidth = screenWidth < maxWidth ? screenWidth : maxWidth;
+    final availableWidth = contentWidth - (padding * 2);
+    final cardWidth = (availableWidth - (spacing * (columns - 1))) / columns;
+
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: Responsive.padding(context, 16)),
+      width: cardWidth,
       child: Shimmer.fromColors(
         baseColor: Colors.grey[300]!,
         highlightColor: Colors.grey[100]!,
@@ -625,16 +638,32 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withValues(alpha: 0.4),
+                blurRadius: 8 + (_gradientAnimationController.value * 4),
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  // 🎨 NEW: Pager empty state
+  // Pager empty state with consistent shadow
   Widget _buildPagerEmptyState() {
+    final columns = Responsive.gridColumns(context);
+    final spacing = Responsive.gridSpacing(context);
+    final padding = Responsive.padding(context, 16);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final maxWidth = Responsive.maxContentWidth(context);
+    final contentWidth = screenWidth < maxWidth ? screenWidth : maxWidth;
+    final availableWidth = contentWidth - (padding * 2);
+    final cardWidth = (availableWidth - (spacing * (columns - 1))) / columns;
+
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: Responsive.padding(context, 16)),
+      width: cardWidth,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -642,6 +671,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           colors: [Color(0xFF667eea), Color(0xFF764ba2)],
         ),
         borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF667eea).withValues(alpha: 0.4),
+            blurRadius: 8 + (_gradientAnimationController.value * 4),
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Center(
         child: Text(
@@ -656,87 +692,35 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // 🎨 NEW: Pager main content with infinite scroll
-  Widget _buildPagerContent() {
-    return Column(
-      children: [
-        // 🎨 NEW: Fixed "Quote of the Day" label above PageView
-        Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: Responsive.padding(context, 16),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: Responsive.padding(context, 12),
-                  vertical: Responsive.padding(context, 6),
-                ),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF667eea).withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.auto_awesome,
-                      size: Responsive.fontSize(context, 14),
-                      color: Colors.white,
-                    ),
-                    SizedBox(width: Responsive.padding(context, 4)),
-                    Text(
-                      'Quote of the Day',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: Responsive.fontSize(context, 12),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        
-        SizedBox(height: Responsive.padding(context, 12)),
-        
-        // PageView with infinite scrolling
-        Expanded(
-          child: PageView.builder(
-            controller: _quotePagerController,
-            onPageChanged: (index) {
-              setState(() => _currentQuotePage = index);
-              // 🎨 Load more quotes when approaching end
-              _loadMoreQuotesIfNeeded(index);
-            },
-            itemCount: null, // 🎨 Infinite scroll
-            itemBuilder: (context, index) {
-              // 🎨 Use modulo to loop through quotes
-              final quoteIndex = index % _randomQuotes.length;
-              return _buildPagerCard(_randomQuotes[quoteIndex], index);
-            },
-          ),
-        ),
-        
-        // Page indicators (show only current position in pool)
-        SizedBox(height: Responsive.padding(context, 8)),
-        _buildPageIndicators(),
-      ],
+  // Pager content
+  Widget _buildPagerContentClean() {
+    final columns = Responsive.gridColumns(context);
+    final spacing = Responsive.gridSpacing(context);
+    final padding = Responsive.padding(context, 16);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final maxWidth = Responsive.maxContentWidth(context);
+    final contentWidth = screenWidth < maxWidth ? screenWidth : maxWidth;
+    final availableWidth = contentWidth - (padding * 2);
+    final cardWidth = (availableWidth - (spacing * (columns - 1))) / columns;
+
+    return PageView.builder(
+      controller: _quotePagerController,
+      onPageChanged: (index) {
+        setState(() => _currentQuotePage = index);
+        _loadMoreQuotesIfNeeded(index);
+      },
+      itemCount: null, // Infinite scroll
+      itemBuilder: (context, index) {
+        final quoteIndex = index % _randomQuotes.length;
+        return Container(
+          width: cardWidth,
+          child: _buildPagerCard(_randomQuotes[quoteIndex], index),
+        );
+      },
     );
   }
 
-  // 🎨 NEW: Individual pager card
+  // Individual pager card with consistent shadow
   Widget _buildPagerCard(Quote quote, int index) {
     final colors = ImageManagerEnhanced.getGradientForQuote(quote.id!);
     final padding = Responsive.padding(context, 20);
@@ -764,7 +748,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           );
         },
         child: Container(
-          margin: EdgeInsets.symmetric(horizontal: Responsive.padding(context, 8)),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -776,14 +759,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             boxShadow: [
               BoxShadow(
                 color: colors[0].withValues(alpha: 0.4),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
+                blurRadius: 8 + (_gradientAnimationController.value * 4),
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: Stack(
             children: [
-              // Decorative quote icon background
               Positioned(
                 top: -20,
                 right: -20,
@@ -794,33 +776,28 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 ),
               ),
               
-              // Main content
               Padding(
                 padding: EdgeInsets.all(padding),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // 🎨 REMOVED: Label moved outside card
-                    
-                    // Quote text
                     Flexible(
                       child: Text(
                         quote.text,
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: Responsive.fontSize(context, 16),
+                          fontSize: Responsive.fontSize(context, 15),
                           fontWeight: FontWeight.w600,
                           height: 1.4,
                         ),
-                        maxLines: 4, // 🎨 CHANGED: Increased from 3 to 4 lines
+                        maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     
                     SizedBox(height: Responsive.padding(context, 12)),
                     
-                    // Author
                     Row(
                       children: [
                         Expanded(
@@ -828,7 +805,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             '- ${quote.author}',
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.9),
-                              fontSize: Responsive.fontSize(context, 14),
+                              fontSize: Responsive.fontSize(context, 13),
                               fontStyle: FontStyle.italic,
                             ),
                             maxLines: 1,
@@ -839,7 +816,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           Icon(
                             Icons.favorite,
                             color: Colors.white,
-                            size: Responsive.fontSize(context, 20),
+                            size: Responsive.fontSize(context, 18),
                           ),
                       ],
                     ),
@@ -853,15 +830,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // 🎨 NEW: Page indicators (shows position in current pool)
+  // Page indicators
   Widget _buildPageIndicators() {
-    // Show only indicators for the current "pool" of visible quotes
     final poolPosition = _currentQuotePage % _quotesPoolSize;
     
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(
-        _quotesPoolSize.clamp(0, 10), // Show max 10 dots
+        _quotesPoolSize.clamp(0, 10),
         (index) {
           final isActive = index == poolPosition;
           return AnimatedContainer(
@@ -930,10 +906,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final columns = Responsive.gridColumns(context);
     final padding = Responsive.padding(context, 16);
     
-    // 🎨 UPDATED: Loading state with Pager + Grid scrollable
     return CustomScrollView(
       slivers: [
-        // Pager loading
         SliverToBoxAdapter(
           child: Container(
             height: Responsive.isMobile(context) ? 200.0 : 240.0,
@@ -950,13 +924,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withValues(alpha: 0.4),
+                      blurRadius: 8 + (_gradientAnimationController.value * 4),
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
         ),
         
-        // Grid loading
         SliverPadding(
           padding: EdgeInsets.all(padding),
           sliver: SliverGrid(
@@ -975,6 +955,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withValues(alpha: 0.4),
+                          blurRadius: 8 + (_gradientAnimationController.value * 4),
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                   ),
                 );
@@ -1006,42 +993,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildCategoriesGrid(List<Category> categories) {
-    // ❌ REMOVED: This function is no longer used
-    // Logic moved to _buildScrollableCategoriesWithPager()
-    final spacing = Responsive.gridSpacing(context);
-    final columns = Responsive.gridColumns(context);
-    final padding = Responsive.padding(context, 16);
-    
-    return Padding(
-      padding: EdgeInsets.all(padding),
-      child: GridView.builder(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: columns,
-          crossAxisSpacing: spacing,
-          mainAxisSpacing: spacing,
-          childAspectRatio: Responsive.categoryCardAspectRatio(context),
-        ),
-        itemCount: categories.length,
-        itemBuilder: (context, index) {
-          final category = categories[index];
-          return TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0.0, end: 1.0),
-            duration: Duration(milliseconds: 300 + (index * 50)),
-            curve: Curves.easeOut,
-            builder: (context, value, child) {
-              return Transform.translate(
-                offset: Offset(0, 30 * (1 - value)),
-                child: Opacity(opacity: value, child: child),
-              );
-            },
-            child: _buildCategoryCard(category),
-          );
-        },
       ),
     );
   }
@@ -1086,7 +1037,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 child: child,
               );
             },
-                          child: Padding(
+            child: Padding(
               padding: EdgeInsets.symmetric(
                 vertical: Responsive.padding(context, 16),
                 horizontal: Responsive.padding(context, 8),
