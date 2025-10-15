@@ -9,10 +9,14 @@ import '../models/quote.dart';
 import '../providers/quote_provider.dart';
 import '../utils/image_manager_enhanced.dart'; // 🎨 CHANGED: Import enhanced version
 import '../utils/responsive.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import '../services/ads_service.dart';
+
 
 class QuoteDetailScreen extends StatefulWidget {
   final List<Quote> quotes;
   final int initialIndex;
+
 
   const QuoteDetailScreen({
     super.key,
@@ -32,6 +36,11 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
+  // 🎯 ADDED: Ads variables
+  int _quoteViewCount = 0;
+  InterstitialAd? _interstitialAd;
+  bool _isInterstitialAdLoaded = false;
+
   @override
   void initState() {
     super.initState();
@@ -50,12 +59,43 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
     );
     
     _fadeController.forward();
+    // 🎯 ADDED: Load interstitial ad
+    _loadInterstitialAd();
+  }
+
+  // 🎯 ADDED: Load interstitial ad
+  void _loadInterstitialAd() {
+    AdsService().loadInterstitialAd().then((ad) {
+      if (mounted) {
+        setState(() {
+          _interstitialAd = ad;
+          _isInterstitialAdLoaded = ad != null;
+        });
+      }
+    });
+  }
+
+  // 🎯 ADDED: Show interstitial ad after 3 quotes
+  void _showInterstitialAdIfReady() {
+    _quoteViewCount++;
+
+    // Show ad after viewing 5 quotes
+    if (_quoteViewCount >= 5 && _isInterstitialAdLoaded && _interstitialAd != null) {
+      print('Showing interstitial ad (quote view count: $_quoteViewCount)');
+      AdsService().showInterstitialAd(_interstitialAd);
+      _quoteViewCount = 0; // Reset counter
+      _isInterstitialAdLoaded = false;
+
+      // Reload for next showing
+      _loadInterstitialAd();
+    }
   }
 
   @override
   void dispose() {
     _pageController.dispose();
     _fadeController.dispose();
+    _interstitialAd?.dispose(); // 🎯 ADDED
     super.dispose();
   }
 
@@ -198,6 +238,8 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
               _fadeController.reset();
               _fadeController.forward();
               HapticFeedback.selectionClick();
+              // 🎯 ADDED: Show interstitial ad after 3 quotes
+              _showInterstitialAdIfReady();
             },
             itemBuilder: (context, index) {
               final quote = quotes[index];

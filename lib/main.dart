@@ -7,9 +7,21 @@ import 'package:google_fonts/google_fonts.dart';
 import 'providers/quote_provider.dart';
 import 'screens/home_screen.dart';
 
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'services/ads_service.dart';
+
 void main() async {
   // Đảm bảo Flutter đã được khởi tạo
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Mobile Ads
+  // Thêm test device ID để hiển thị test ads trên Samsung Fold 5
+  await MobileAds.instance.updateRequestConfiguration(
+    RequestConfiguration(
+      testDeviceIds: ['93DC8935CA5C5D6E7F9B9C2D0C577EAA'],
+    ),
+  );
+  await AdsService().initialize();
   
   // Cài đặt orientation cho app (chỉ portrait)
   await SystemChrome.setPreferredOrientations([

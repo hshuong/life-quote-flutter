@@ -28,6 +28,8 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        // 🎯 ADDED: MultiDex support (if needed for Google Play Services)
+        multiDexEnabled = true
     }
 
     buildTypes {
@@ -39,6 +41,12 @@ android {
     }
 }
 
+
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // 🎯 FIXED: Kotlin DSL syntax with parentheses
+    implementation("com.google.android.gms:play-services-ads:23.0.0")
 }

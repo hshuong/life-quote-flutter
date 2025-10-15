@@ -44,6 +44,9 @@ dependencies:
   
   # Chia sẻ quote qua các app khác
   share_plus: ^12.0.0
+
+  # Quảng cáo AdMob
+  google_mobile_ads: ^6.0.0  # Latest version
   
   # State management - Quản lý state toàn app
   provider: ^6.1.1
@@ -53,6 +56,8 @@ dependencies:
   
   # Font chữ đẹp từ Google
   google_fonts: ^6.1.0
+
+
 
 dev_dependencies:
   flutter_test:
