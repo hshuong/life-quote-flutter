@@ -1,20 +1,20 @@
 // lib/screens/home_screen.dart
-// ENHANCED với Horizontal Quote Pager
+// Fixed: Banner ad không che khuất nội dung - Sử dụng Column layout
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../models/category.dart';
 import '../models/quote.dart';
 import '../providers/quote_provider.dart';
 import '../utils/image_manager_enhanced.dart';
+import '../utils/category_image_manager.dart';
 import '../utils/responsive.dart';
+import '../services/ads_service.dart';
 import 'quote_list_screen.dart';
 import 'quote_detail_screen.dart';
 import 'favorites_screen.dart';
-
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import '../services/ads_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,25 +25,19 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   int _selectedIndex = 0;
-
-  // Search state
+  
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   List<Quote> _searchResults = [];
   bool _isSearchLoading = false;
 
-  // Animation controller
   late AnimationController _gradientAnimationController;
-
-  // 🎨 NEW: Horizontal Pager state
+  
   late PageController _quotePagerController;
   int _currentQuotePage = 0;
   List<Quote> _randomQuotes = [];
   bool _isLoadingRandomQuotes = true;
-
-  // 🎨 NEW: For infinite scroll
-  static const int _quotesPoolSize =
-      20; // Load 20 quotes for smooth infinite scroll
+  static const int _quotesPoolSize = 20;
   bool _isLoadingMoreQuotes = false;
 
   BannerAd? _homeBannerAd;
@@ -52,23 +46,22 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-
+    
     _gradientAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
     )..repeat(reverse: true);
-
-    // 🎨 NEW: Initialize PageController for horizontal pager
+    
     _quotePagerController = PageController(
-      viewportFraction: 0.9, // Show a bit of next/previous card
+      viewportFraction: 1.0,
     );
-
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<QuoteProvider>().loadCategories();
       context.read<QuoteProvider>().loadFavoriteQuotes();
-      _loadRandomQuotesForPager(); // 🎨 NEW: Load random quotes
-      _loadHomeBannerAd(); // 🎯 ADDED
-    });  
+      _loadRandomQuotesForPager();
+      _loadHomeBannerAd();
+    });
   }
 
   void _loadHomeBannerAd() {
@@ -86,18 +79,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void dispose() {
     _searchController.dispose();
     _gradientAnimationController.dispose();
-    _quotePagerController.dispose(); // 🎨 NEW
+    _quotePagerController.dispose();
     _homeBannerAd?.dispose();
     super.dispose();
   }
 
-  // 🎨 NEW: Load random quotes for horizontal pager (20 quotes for infinite scroll)
   Future<void> _loadRandomQuotesForPager() async {
     setState(() => _isLoadingRandomQuotes = true);
-
+    
     final provider = context.read<QuoteProvider>();
-
-    // Load 20 random quotes for smooth infinite scrolling
+    
     final quotes = <Quote>[];
     for (int i = 0; i < _quotesPoolSize; i++) {
       final randomQuote = await provider.getRandomQuote();
@@ -105,7 +96,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         quotes.add(randomQuote);
       }
     }
-
+    
     if (mounted) {
       setState(() {
         _randomQuotes = quotes;
@@ -114,23 +105,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
-  // 🎨 NEW: Load more quotes when approaching end (for infinite scroll)
   Future<void> _loadMoreQuotesIfNeeded(int currentPage) async {
-    // If user is near the end (last 5 quotes), load more
     if (currentPage >= _randomQuotes.length - 5 && !_isLoadingMoreQuotes) {
       setState(() => _isLoadingMoreQuotes = true);
-
+      
       final provider = context.read<QuoteProvider>();
       final newQuotes = <Quote>[];
-
-      // Load 10 more quotes
+      
       for (int i = 0; i < 10; i++) {
         final randomQuote = await provider.getRandomQuote();
         if (randomQuote != null) {
           newQuotes.add(randomQuote);
         }
       }
-
+      
       if (mounted && newQuotes.isNotEmpty) {
         setState(() {
           _randomQuotes.addAll(newQuotes);
@@ -162,87 +150,87 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
+  @override
+  Widget build(BuildContext context) {
+    final showBottomNav = Responsive.showBottomNav(context);
 
-// ...existing code...
-@override
-Widget build(BuildContext context) {
-  final showBottomNav = Responsive.showBottomNav(context);
-
-  // Banner Ad Widget
-  Widget bannerAdWidget = _isHomeBannerAdLoaded && _homeBannerAd != null
-      ? SizedBox(
-          width: _homeBannerAd!.size.width.toDouble(),
-          height: _homeBannerAd!.size.height.toDouble(),
-          child: AdWidget(ad: _homeBannerAd!),
-        )
-      : const SizedBox.shrink();
-
-  return Scaffold(
-    backgroundColor: Colors.grey[100],
-    appBar: AppBar(
-      title: _isSearching ? _buildSearchField() : _buildTitle(),
-      centerTitle: true,
-      backgroundColor: Colors.deepPurple,
-      elevation: 0,
-      actions: [
-        IconButton(
-          icon: Icon(_isSearching ? Icons.close : Icons.search),
-          onPressed: () {
-            setState(() {
-              _isSearching = !_isSearching;
-              if (!_isSearching) {
-                _searchController.clear();
-                _searchResults = [];
-              }
-            });
-          },
-          iconSize: Responsive.fontSize(context, 24),
-          tooltip: _isSearching ? 'Close Search' : 'Search',
-        ),
-      ],
-    ),
-    body: Center(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: Responsive.maxContentWidth(context),
-        ),
-        child: Column(
-          children: [
-            Expanded(
-              child: _isSearching
-                  ? _buildSearchResults()
-                  : (_selectedIndex == 0
-                        ? _buildCategoriesView()
-                        : const FavoritesScreen()),
-            ),
-            // Banner Ad placed at the bottom, above navigation bar
-            bannerAdWidget,
-          ],
-        ),
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        title: _isSearching ? _buildSearchField() : _buildTitle(),
+        centerTitle: true,
+        backgroundColor: Colors.deepPurple,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            onPressed: () {
+              setState(() {
+                _isSearching = !_isSearching;
+                if (!_isSearching) {
+                  _searchController.clear();
+                  _searchResults = [];
+                }
+              });
+            },
+            iconSize: Responsive.fontSize(context, 24),
+            tooltip: _isSearching ? 'Close Search' : 'Search',
+          ),
+        ],
       ),
-    ),
-    // Remove bottomSheet
-    bottomNavigationBar: showBottomNav
-        ? BottomNavigationBar(
-            currentIndex: _selectedIndex,
-            onTap: (index) => setState(() => _selectedIndex = index),
-            selectedItemColor: Colors.deepPurple,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.category),
-                label: 'Categories',
+      body: Column(
+        children: [
+          // Nội dung chính - chiếm toàn bộ không gian còn lại
+          Expanded(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: Responsive.maxContentWidth(context),
+                ),
+                child: _isSearching 
+                    ? _buildSearchResults() 
+                    : (_selectedIndex == 0 
+                        ? _buildCategoriesView() 
+                        : const FavoritesScreen()),
               ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.favorite),
-                label: 'Favorites',
+            ),
+          ),
+          
+          // Banner ad ở dưới cùng (ngoài Expanded nên không che khuất)
+          if (_isHomeBannerAdLoaded && _homeBannerAd != null)
+            Container(
+              color: Colors.white,
+              child: SafeArea(
+                top: false,
+                child: SizedBox(
+                  width: _homeBannerAd!.size.width.toDouble(),
+                  height: _homeBannerAd!.size.height.toDouble(),
+                  child: AdWidget(ad: _homeBannerAd!),
+                ),
               ),
-            ],
-          )
-        : null,
-    drawer: !showBottomNav ? _buildDrawer() : null,
-  );
-}
-// ...existing code...
+            ),
+        ],
+      ),
+      bottomNavigationBar: showBottomNav
+          ? BottomNavigationBar(
+              currentIndex: _selectedIndex,
+              onTap: (index) => setState(() => _selectedIndex = index),
+              selectedItemColor: Colors.deepPurple,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.category),
+                  label: 'Categories',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.favorite),
+                  label: 'Favorites',
+                ),
+              ],
+            )
+          : null,
+      drawer: !showBottomNav ? _buildDrawer() : null,
+    );
+  }
 
   Widget _buildTitle() {
     return Text(
@@ -279,7 +267,7 @@ Widget build(BuildContext context) {
       },
     );
   }
-
+  
   Widget _buildSearchResults() {
     if (_isSearchLoading) {
       return const Center(
@@ -536,7 +524,6 @@ Widget build(BuildContext context) {
     );
   }
 
-  // 🎨 ENHANCED: Categories view with Horizontal Quote Pager scrollable inside
   Widget _buildCategoriesView() {
     return Consumer<QuoteProvider>(
       builder: (context, provider, child) {
@@ -549,179 +536,131 @@ Widget build(BuildContext context) {
         if (provider.categories.isEmpty) {
           return _buildEmptyState();
         }
-
-        // 🎨 NEW: Single scrollable view with Pager + Grid
         return _buildScrollableCategoriesWithPager(provider.categories);
       },
     );
   }
 
-  // 🎨 NEW: Scrollable content with Pager inside
   Widget _buildScrollableCategoriesWithPager(List<Category> categories) {
     final spacing = Responsive.gridSpacing(context);
     final columns = Responsive.gridColumns(context);
     final padding = Responsive.padding(context, 16);
-
+    
     return CustomScrollView(
       slivers: [
-        // 🎨 Horizontal Quote Pager as first sliver
-        SliverToBoxAdapter(child: _buildHorizontalQuotePager()),
-
-        // 🎨 Categories Grid
+        SliverToBoxAdapter(
+          child: _buildHorizontalQuotePager(),
+        ),
+        
         SliverPadding(
-          padding: EdgeInsets.all(padding),
+          padding: EdgeInsets.only(
+            left: padding,
+            right: padding,
+            top: 8,
+            bottom: padding,
+          ),
           sliver: SliverGrid(
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: columns,
               crossAxisSpacing: spacing,
               mainAxisSpacing: spacing,
-              childAspectRatio: Responsive.categoryCardAspectRatio(context),
+              childAspectRatio: 0.75,
             ),
-            delegate: SliverChildBuilderDelegate((context, index) {
-              final category = categories[index];
-              return TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: Duration(milliseconds: 300 + (index * 50)),
-                curve: Curves.easeOut,
-                builder: (context, value, child) {
-                  return Transform.translate(
-                    offset: Offset(0, 30 * (1 - value)),
-                    child: Opacity(opacity: value, child: child),
-                  );
-                },
-                child: _buildCategoryCard(category),
-              );
-            }, childCount: categories.length),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final category = categories[index];
+                return TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  duration: Duration(milliseconds: 300 + (index * 50)),
+                  curve: Curves.easeOut,
+                  builder: (context, value, child) {
+                    return Transform.translate(
+                      offset: Offset(0, 30 * (1 - value)),
+                      child: Opacity(opacity: value, child: child),
+                    );
+                  },
+                  child: _buildCategoryCard(category),
+                );
+              },
+              childCount: categories.length,
+            ),
           ),
         ),
       ],
     );
   }
-
-  // 🎨 NEW: Horizontal Quote Pager Widget with consistent sizing
+  
   Widget _buildHorizontalQuotePager() {
     final padding = Responsive.padding(context, 16);
     final spacing = Responsive.gridSpacing(context);
     final columns = Responsive.gridColumns(context);
-
-    // 🎨 Calculate pager height based on category card aspect ratio
+    
     final screenWidth = MediaQuery.of(context).size.width;
     final maxWidth = Responsive.maxContentWidth(context);
     final contentWidth = screenWidth < maxWidth ? screenWidth : maxWidth;
     final availableWidth = contentWidth - (padding * 2);
     final cardWidth = (availableWidth - (spacing * (columns - 1))) / columns;
-    final aspectRatio = Responsive.categoryCardAspectRatio(context);
-    final pagerHeight = cardWidth / aspectRatio; // Same height as category card
-
+    final aspectRatio = 0.75;
+    final pagerHeight = cardWidth / aspectRatio;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 🎨 "Quote of the Day" label OUTSIDE pager
-        Padding(
-          padding: EdgeInsets.only(left: padding, right: padding, top: padding),
-          child: Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: Responsive.padding(context, 12),
-              vertical: Responsive.padding(context, 6),
-            ),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-              ),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF667eea).withValues(alpha: 0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.auto_awesome,
-                  size: Responsive.fontSize(context, 14),
-                  color: Colors.white,
-                ),
-                SizedBox(width: Responsive.padding(context, 4)),
-                Text(
-                  'Quote of the Day',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: Responsive.fontSize(context, 12),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        // 🎨 Space between label and pager (same as grid spacing)
         SizedBox(height: spacing),
-
-        // 🎨 Horizontal Pager with matching margins
+        
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: padding),
+          padding: EdgeInsets.only(
+            left: 8,
+            right: 8,
+            top: 8,
+            bottom: 8,
+          ),
           child: SizedBox(
             height: pagerHeight,
             child: _isLoadingRandomQuotes
                 ? _buildPagerLoadingState()
                 : _randomQuotes.isEmpty
-                ? _buildPagerEmptyState()
-                : _buildPagerContentClean(),
+                    ? _buildPagerEmptyState()
+                    : _buildPagerContentClean(),
           ),
         ),
-
-        // 🎨 Space between pager and indicators (same as grid spacing)
+        
         SizedBox(height: spacing),
-
-        // 🎨 Page indicators (centered)
+        
         if (!_isLoadingRandomQuotes && _randomQuotes.isNotEmpty)
-          Center(child: _buildPageIndicators()),
-
-        // 🎨 Space after indicators before grid
+          Center(
+            child: _buildPageIndicators(),
+          ),
+        
         SizedBox(height: spacing),
       ],
     );
   }
 
-  // 🎨 NEW: Pager loading state (updated with matching shadow effect)
   Widget _buildPagerLoadingState() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: Responsive.padding(context, 16)),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        // 🎨 Shadow effect matching category cards
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey[400]!.withValues(alpha: 0.4),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Shimmer.fromColors(
-        baseColor: Colors.grey[300]!,
-        highlightColor: Colors.grey[100]!,
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-          ),
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey[400]!.withValues(alpha: 0.4),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  // 🎨 NEW: Pager empty state (updated with matching shadow effect)
   Widget _buildPagerEmptyState() {
     final colors = [const Color(0xFF667eea), const Color(0xFF764ba2)];
-
+    
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: Responsive.padding(context, 16)),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -730,7 +669,6 @@ Widget build(BuildContext context) {
           stops: const [0.0, 0.5, 1.0],
         ),
         borderRadius: BorderRadius.circular(20),
-        // 🎨 Shadow effect matching category cards
         boxShadow: [
           BoxShadow(
             color: colors[0].withValues(alpha: 0.4),
@@ -752,7 +690,6 @@ Widget build(BuildContext context) {
     );
   }
 
-  // 🎨 NEW: Clean pager content without internal label
   Widget _buildPagerContentClean() {
     return PageView.builder(
       controller: _quotePagerController,
@@ -760,7 +697,7 @@ Widget build(BuildContext context) {
         setState(() => _currentQuotePage = index);
         _loadMoreQuotesIfNeeded(index);
       },
-      itemCount: null, // Infinite scroll
+      itemCount: null,
       itemBuilder: (context, index) {
         final quoteIndex = index % _randomQuotes.length;
         return _buildPagerCard(_randomQuotes[quoteIndex], index);
@@ -768,13 +705,10 @@ Widget build(BuildContext context) {
     );
   }
 
- 
-
-  // 🎨 NEW: Individual pager card with consistent shadow & gradient effects
   Widget _buildPagerCard(Quote quote, int index) {
     final colors = ImageManagerEnhanced.getGradientForQuote(quote.id!);
     final padding = Responsive.padding(context, 20);
-
+    
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
       duration: const Duration(milliseconds: 400),
@@ -790,17 +724,16 @@ Widget build(BuildContext context) {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) =>
-                  QuoteDetailScreen(quotes: [quote], initialIndex: 0),
+              builder: (context) => QuoteDetailScreen(
+                quotes: [quote],
+                initialIndex: 0,
+              ),
             ),
           );
         },
         child: Container(
-          margin: EdgeInsets.symmetric(
-            horizontal: Responsive.padding(context, 8),
-          ),
+          margin: EdgeInsets.symmetric(horizontal: Responsive.padding(context, 8)),
           decoration: BoxDecoration(
-            // 🎨 3-color gradient like category cards
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -808,7 +741,6 @@ Widget build(BuildContext context) {
               stops: const [0.0, 0.5, 1.0],
             ),
             borderRadius: BorderRadius.circular(20),
-            // 🎨 Enhanced shadow matching category cards
             boxShadow: [
               BoxShadow(
                 color: colors[0].withValues(alpha: 0.4),
@@ -819,7 +751,6 @@ Widget build(BuildContext context) {
           ),
           child: Stack(
             children: [
-              // Decorative quote icon background (like category cards)
               Positioned(
                 top: -20,
                 right: -20,
@@ -829,15 +760,13 @@ Widget build(BuildContext context) {
                   color: Colors.white.withValues(alpha: 0.1),
                 ),
               ),
-
-              // Main content
+              
               Padding(
                 padding: EdgeInsets.all(padding),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Quote text
                     Flexible(
                       child: Text(
                         quote.text,
@@ -851,10 +780,9 @@ Widget build(BuildContext context) {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-
+                    
                     SizedBox(height: Responsive.padding(context, 12)),
-
-                    // Author
+                    
                     Row(
                       children: [
                         Expanded(
@@ -887,22 +815,19 @@ Widget build(BuildContext context) {
     );
   }
 
-  // 🎨 NEW: Page indicators (shows position in current pool)
   Widget _buildPageIndicators() {
-    // Show only indicators for the current "pool" of visible quotes
     final poolPosition = _currentQuotePage % _quotesPoolSize;
-
+    
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
       children: List.generate(
-        _quotesPoolSize.clamp(0, 10), // Show max 10 dots
+        _quotesPoolSize.clamp(0, 10),
         (index) {
           final isActive = index == poolPosition;
           return AnimatedContainer(
             duration: const Duration(milliseconds: 300),
-            margin: EdgeInsets.symmetric(
-              horizontal: Responsive.padding(context, 4),
-            ),
+            margin: EdgeInsets.symmetric(horizontal: Responsive.padding(context, 4)),
             width: isActive ? 24.0 : 8.0,
             height: 8.0,
             decoration: BoxDecoration(
@@ -967,10 +892,8 @@ Widget build(BuildContext context) {
     final columns = Responsive.gridColumns(context);
     final padding = Responsive.padding(context, 16);
 
-    // 🎨 UPDATED: Loading state with Pager + Grid scrollable
     return CustomScrollView(
       slivers: [
-        // Pager loading
         SliverToBoxAdapter(
           child: Container(
             height: Responsive.isMobile(context) ? 200.0 : 240.0,
@@ -993,7 +916,6 @@ Widget build(BuildContext context) {
           ),
         ),
 
-        // Grid loading
         SliverPadding(
           padding: EdgeInsets.all(padding),
           sliver: SliverGrid(
@@ -1043,10 +965,10 @@ Widget build(BuildContext context) {
       ),
     );
   }
-
- 
+  
   Widget _buildCategoryCard(Category category) {
-    final colors = ImageManagerEnhanced.getColorsForCategory(category.name);
+    final imagePath = CategoryImageManager.getImagePath(category.name);
+    final fallbackColors = CategoryImageManager.getFallbackGradient(category.name);
 
     return Hero(
       tag: 'category_${category.id}',
@@ -1062,63 +984,105 @@ Widget build(BuildContext context) {
             );
           },
           borderRadius: BorderRadius.circular(20),
-          child: AnimatedBuilder(
-            animation: _gradientAnimationController,
-            builder: (context, child) {
-              return Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: colors,
-                    stops: const [0.0, 0.5, 1.0],
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors[0].withValues(alpha: 0.4),
-                      blurRadius: 8 + (_gradientAnimationController.value * 4),
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
-                child: child,
-              );
-            },
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                vertical: Responsive.padding(context, 16),
-                horizontal: Responsive.padding(context, 8),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0.8, end: 1.0),
-                    duration: const Duration(milliseconds: 600),
-                    curve: Curves.elasticOut,
-                    builder: (context, scale, child) {
-                      return Transform.scale(scale: scale, child: child);
-                    },
-                    child: Text(
-                      category.icon,
-                      style: TextStyle(
-                        fontSize: Responsive.categoryCardIconSize(context),
+                  // Background: Image or Gradient
+                  if (imagePath != null)
+                    Image.asset(
+                      imagePath,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        // Fallback to gradient if image fails
+                        return Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: fallbackColors,
+                            ),
+                          ),
+                        );
+                      },
+                    )
+                  else
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: fallbackColors,
+                        ),
+                      ),
+                    ),
+                  
+                  // Dark gradient overlay for text readability
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.7),
+                        ],
+                        stops: const [0.5, 1.0],
                       ),
                     ),
                   ),
-
-                  SizedBox(height: Responsive.padding(context, 8)),
-
-                  Flexible(
-                    child: Center(
-                      child: Text(
-                        category.name,
-                        style: Responsive.categoryCardTitleStyle(context),
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                  
+                  // Content
+                  Padding(
+                    padding: EdgeInsets.all(Responsive.padding(context, 16)),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Category name
+                        Text(
+                          category.name.toUpperCase(),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: Responsive.fontSize(context, 18),
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withValues(alpha: 0.5),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        
+                        SizedBox(height: Responsive.padding(context, 8)),
+                        
+                        // Decorative line
+                        Container(
+                          width: 40,
+                          height: 3,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -1129,4 +1093,5 @@ Widget build(BuildContext context) {
       ),
     );
   }
+
 }
