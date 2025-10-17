@@ -1,5 +1,5 @@
 // lib/screens/quote_detail_screen.dart
-// ENHANCED với decorative geometric shapes và 3-color gradients
+// Optimized: Interstitial ads không che khuất, hiển thị giữa các quote
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,16 +7,14 @@ import 'package:share_plus/share_plus.dart';
 import 'package:provider/provider.dart';
 import '../models/quote.dart';
 import '../providers/quote_provider.dart';
-import '../utils/image_manager_enhanced.dart'; // 🎨 CHANGED: Import enhanced version
+import '../utils/image_manager_enhanced.dart';
 import '../utils/responsive.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../services/ads_service.dart';
 
-
 class QuoteDetailScreen extends StatefulWidget {
   final List<Quote> quotes;
   final int initialIndex;
-
 
   const QuoteDetailScreen({
     super.key,
@@ -36,7 +34,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
-  // 🎯 ADDED: Ads variables
+  // Ads variables
   int _quoteViewCount = 0;
   InterstitialAd? _interstitialAd;
   bool _isInterstitialAdLoaded = false;
@@ -59,11 +57,11 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
     );
     
     _fadeController.forward();
-    // 🎯 ADDED: Load interstitial ad
+    
+    // Load interstitial ad
     _loadInterstitialAd();
   }
 
-  // 🎯 ADDED: Load interstitial ad
   void _loadInterstitialAd() {
     AdsService().loadInterstitialAd().then((ad) {
       if (mounted) {
@@ -75,13 +73,12 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
     });
   }
 
-  // 🎯 ADDED: Show interstitial ad after 3 quotes
+  // Show interstitial ad after viewing 5 quotes
   void _showInterstitialAdIfReady() {
     _quoteViewCount++;
 
-    // Show ad after viewing 5 quotes
     if (_quoteViewCount >= 5 && _isInterstitialAdLoaded && _interstitialAd != null) {
-      print('Showing interstitial ad (quote view count: $_quoteViewCount)');
+      print('🎯 Showing interstitial ad (quote view count: $_quoteViewCount)');
       AdsService().showInterstitialAd(_interstitialAd);
       _quoteViewCount = 0; // Reset counter
       _isInterstitialAdLoaded = false;
@@ -95,7 +92,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
   void dispose() {
     _pageController.dispose();
     _fadeController.dispose();
-    _interstitialAd?.dispose(); // 🎯 ADDED
+    _interstitialAd?.dispose();
     super.dispose();
   }
 
@@ -191,7 +188,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
           icon: Container(
             padding: EdgeInsets.all(Responsive.padding(context, 8)),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.3), 
+              color: Colors.black.withValues(alpha: 0.3),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -211,7 +208,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
                 vertical: Responsive.padding(context, 6),
               ),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.3), 
+                color: Colors.black.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -238,7 +235,8 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
               _fadeController.reset();
               _fadeController.forward();
               HapticFeedback.selectionClick();
-              // 🎯 ADDED: Show interstitial ad after 3 quotes
+              
+              // Show interstitial ad after viewing multiple quotes
               _showInterstitialAdIfReady();
             },
             itemBuilder: (context, index) {
@@ -260,22 +258,21 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
     );
   }
 
-  // 🎨 ENHANCED: Quote page với decorative shapes
   Widget _buildQuotePage(Quote quote) {
-    final decoration = ImageManagerEnhanced.getBackgroundDecoration(quote.id!); // 🎨 CHANGED
-    final textColor = ImageManagerEnhanced.getTextColor(quote.id!); // 🎨 CHANGED
+    final decoration = ImageManagerEnhanced.getBackgroundDecoration(quote.id!);
+    final textColor = ImageManagerEnhanced.getTextColor(quote.id!);
     final screenSize = MediaQuery.of(context).size;
 
     return FadeTransition(
       opacity: _fadeAnimation,
       child: Stack(
         children: [
-          // 🎨 NEW: Background với gradient
+          // Background with gradient
           Container(
             decoration: decoration,
           ),
           
-          // 🎨 NEW: Decorative geometric shapes
+          // Decorative geometric shapes
           ImageManagerEnhanced.buildDecorativeShapes(
             quoteId: quote.id!,
             screenSize: screenSize,
@@ -308,7 +305,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
                         child: Icon(
                           Icons.format_quote_rounded,
                           size: Responsive.fontSize(context, 56),
-                          color: textColor.withValues(alpha: 0.5), 
+                          color: textColor.withValues(alpha: 0.5),
                         ),
                       ),
                       SizedBox(height: Responsive.padding(context, 24)),
@@ -353,7 +350,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
                             vertical: Responsive.padding(context, 10),
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2), 
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -380,8 +377,6 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
   }
 
   Widget _buildActionButtons(Quote quote) {
-    ImageManagerEnhanced.getTextColor(quote.id!); // 🎨 CHANGED
-    
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -389,7 +384,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
           end: Alignment.bottomCenter,
           colors: [
             Colors.transparent,
-            Colors.black.withValues(alpha: 0.3), 
+            Colors.black.withValues(alpha: 0.3),
           ],
         ),
       ),
@@ -448,10 +443,10 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
               vertical: Responsive.padding(context, 12),
             ),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.3), 
+              color: Colors.white.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.3), 
+                color: Colors.white.withValues(alpha: 0.3),
                 width: 1.5,
               ),
             ),

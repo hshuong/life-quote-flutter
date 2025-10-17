@@ -1,13 +1,16 @@
 // lib/screens/quote_list_screen.dart
+// Optimized: Padding cân bằng, banner ad không che khuất
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../models/category.dart';
 import '../models/quote.dart';
 import '../providers/quote_provider.dart';
 import '../utils/image_manager.dart';
 import '../utils/responsive.dart';
+import '../services/ads_service.dart';
 import 'quote_detail_screen.dart';
 
 class QuoteListScreen extends StatefulWidget {
@@ -25,17 +28,34 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<Quote> _filteredQuotes = [];
 
+  // Ads
+  BannerAd? _bannerAd;
+  bool _isBannerAdLoaded = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<QuoteProvider>().loadQuotesForCategory(widget.category.id!);
+      _loadBannerAd();
+    });
+  }
+
+  void _loadBannerAd() {
+    AdsService().loadBannerAd().then((ad) {
+      if (mounted) {
+        setState(() {
+          _bannerAd = ad;
+          _isBannerAdLoaded = true;
+        });
+      }
     });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _bannerAd?.dispose();
     super.dispose();
   }
 
@@ -100,13 +120,34 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
           ),
         ],
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: Responsive.maxContentWidth(context),
+      body: Column(
+        children: [
+          // Nội dung chính
+          Expanded(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: Responsive.maxContentWidth(context),
+                ),
+                child: _buildQuotesList(),
+              ),
+            ),
           ),
-          child: _buildQuotesList(),
-        ),
+          
+          // Banner ad ở dưới cùng (ngoài Expanded)
+          if (_isBannerAdLoaded && _bannerAd != null)
+            Container(
+              color: Colors.white,
+              child: SafeArea(
+                top: false,
+                child: SizedBox(
+                  width: _bannerAd!.size.width.toDouble(),
+                  height: _bannerAd!.size.height.toDouble(),
+                  child: AdWidget(ad: _bannerAd!),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -178,32 +219,35 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
         // Empty state - không có quotes trong category
         if (allQuotes.isEmpty) {
           return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.format_quote,
-                  size: Responsive.fontSize(context, 80),
-                  color: Colors.grey[400],
-                ),
-                SizedBox(height: Responsive.padding(context, 24)),
-                Text(
-                  'No quotes available',
-                  style: TextStyle(
-                    fontSize: Responsive.fontSize(context, 20),
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey[700],
+            child: Padding(
+              padding: EdgeInsets.all(Responsive.padding(context, 32)),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.format_quote,
+                    size: Responsive.fontSize(context, 80),
+                    color: Colors.grey[400],
                   ),
-                ),
-                SizedBox(height: Responsive.padding(context, 8)),
-                Text(
-                  'in ${widget.category.name} category',
-                  style: TextStyle(
-                    fontSize: Responsive.fontSize(context, 14),
-                    color: Colors.grey[500],
+                  SizedBox(height: Responsive.padding(context, 24)),
+                  Text(
+                    'No quotes available',
+                    style: TextStyle(
+                      fontSize: Responsive.fontSize(context, 20),
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[700],
+                    ),
                   ),
-                ),
-              ],
+                  SizedBox(height: Responsive.padding(context, 8)),
+                  Text(
+                    'in ${widget.category.name} category',
+                    style: TextStyle(
+                      fontSize: Responsive.fontSize(context, 14),
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         }
@@ -291,46 +335,49 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
   // No filter results
   Widget _buildNoFilterResults() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.search_off,
-            size: Responsive.fontSize(context, 80),
-            color: Colors.grey[400],
-          ),
-          SizedBox(height: Responsive.padding(context, 16)),
-          Text(
-            'No matching quotes',
-            style: TextStyle(
-              fontSize: Responsive.fontSize(context, 18),
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[700],
+      child: Padding(
+        padding: EdgeInsets.all(Responsive.padding(context, 32)),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.search_off,
+              size: Responsive.fontSize(context, 80),
+              color: Colors.grey[400],
             ),
-          ),
-          SizedBox(height: Responsive.padding(context, 8)),
-          Text(
-            'Try different keywords',
-            style: TextStyle(
-              fontSize: Responsive.fontSize(context, 14),
-              color: Colors.grey[500],
+            SizedBox(height: Responsive.padding(context, 16)),
+            Text(
+              'No matching quotes',
+              style: TextStyle(
+                fontSize: Responsive.fontSize(context, 18),
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[700],
+              ),
             ),
-          ),
-          SizedBox(height: Responsive.padding(context, 16)),
-          TextButton.icon(
-            onPressed: () {
-              setState(() {
-                _searchController.clear();
-                _filteredQuotes = [];
-              });
-            },
-            icon: const Icon(Icons.clear),
-            label: const Text('Clear Filter'),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.deepPurple,
+            SizedBox(height: Responsive.padding(context, 8)),
+            Text(
+              'Try different keywords',
+              style: TextStyle(
+                fontSize: Responsive.fontSize(context, 14),
+                color: Colors.grey[500],
+              ),
             ),
-          ),
-        ],
+            SizedBox(height: Responsive.padding(context, 16)),
+            TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _searchController.clear();
+                  _filteredQuotes = [];
+                });
+              },
+              icon: const Icon(Icons.clear),
+              label: const Text('Clear Filter'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.deepPurple,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
