@@ -1,5 +1,5 @@
 // lib/screens/quote_list_screen.dart
-// Optimized: Padding cân bằng, banner ad không che khuất
+// Optimized: Padding cân bằng, adaptive banner với padding
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -41,15 +41,28 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
     });
   }
 
-  void _loadBannerAd() {
-    AdsService().loadBannerAd().then((ad) {
-      if (mounted) {
-        setState(() {
-          _bannerAd = ad;
-          _isBannerAdLoaded = true;
-        });
-      }
-    });
+  Future<void> _loadBannerAd() async {
+    final padding = Responsive.padding(context, 16);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final maxWidth = Responsive.maxContentWidth(context);
+    final contentWidth = screenWidth < maxWidth ? screenWidth : maxWidth;
+    final bannerWidth = (contentWidth - (padding * 2)).truncate();
+    
+    final size = await AdsService().getAdaptiveBannerSize(bannerWidth);
+    
+    if (size == null) {
+      print('Unable to get adaptive banner size');
+      return;
+    }
+    
+    final ad = await AdsService().loadAdaptiveBannerAd(size);
+    
+    if (mounted && ad != null) {
+      setState(() {
+        _bannerAd = ad;
+        _isBannerAdLoaded = true;
+      });
+    }
   }
 
   @override
@@ -134,10 +147,23 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
             ),
           ),
           
-          // Banner ad ở dưới cùng (ngoài Expanded)
+          // Adaptive Banner với padding (không bo góc)
           if (_isBannerAdLoaded && _bannerAd != null)
             Container(
-              color: Colors.white,
+              margin: EdgeInsets.symmetric(
+                horizontal: Responsive.padding(context, 16),
+                vertical: Responsive.padding(context, 4),
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
               child: SafeArea(
                 top: false,
                 child: SizedBox(

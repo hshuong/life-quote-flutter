@@ -1,5 +1,5 @@
 // lib/screens/home_screen.dart
-// Optimized: Padding nhất quán giữa HorizontalQuotePager và Grid
+// UPDATED: HorizontalQuotePager sử dụng ảnh nền như Category Cards
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -25,14 +25,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   int _selectedIndex = 0;
-
+  
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   List<Quote> _searchResults = [];
   bool _isSearchLoading = false;
 
   late AnimationController _gradientAnimationController;
-
+  
   late PageController _quotePagerController;
   int _currentQuotePage = 0;
   List<Quote> _randomQuotes = [];
@@ -46,14 +46,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-
+    
     _gradientAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
     )..repeat(reverse: true);
-
-    _quotePagerController = PageController(viewportFraction: 1.0);
-
+    
+    _quotePagerController = PageController(
+      viewportFraction: 1.0,
+    );
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<QuoteProvider>().loadCategories();
       context.read<QuoteProvider>().loadFavoriteQuotes();
@@ -62,15 +64,28 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     });
   }
 
-  void _loadHomeBannerAd() {
-    AdsService().loadBannerAd().then((ad) {
-      if (mounted) {
-        setState(() {
-          _homeBannerAd = ad;
-          _isHomeBannerAdLoaded = true;
-        });
-      }
-    });
+  Future<void> _loadHomeBannerAd() async {
+    final padding = Responsive.padding(context, 16);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final maxWidth = Responsive.maxContentWidth(context);
+    final contentWidth = screenWidth < maxWidth ? screenWidth : maxWidth;
+    final bannerWidth = (contentWidth - (padding * 2)).truncate();
+    
+    final size = await AdsService().getAdaptiveBannerSize(bannerWidth);
+    
+    if (size == null) {
+      print('Unable to get adaptive banner size');
+      return;
+    }
+    
+    final ad = await AdsService().loadAdaptiveBannerAd(size);
+    
+    if (mounted && ad != null) {
+      setState(() {
+        _homeBannerAd = ad;
+        _isHomeBannerAdLoaded = true;
+      });
+    }
   }
 
   @override
@@ -84,9 +99,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Future<void> _loadRandomQuotesForPager() async {
     setState(() => _isLoadingRandomQuotes = true);
-
+    
     final provider = context.read<QuoteProvider>();
-
+    
     final quotes = <Quote>[];
     for (int i = 0; i < _quotesPoolSize; i++) {
       final randomQuote = await provider.getRandomQuote();
@@ -94,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         quotes.add(randomQuote);
       }
     }
-
+    
     if (mounted) {
       setState(() {
         _randomQuotes = quotes;
@@ -106,17 +121,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Future<void> _loadMoreQuotesIfNeeded(int currentPage) async {
     if (currentPage >= _randomQuotes.length - 5 && !_isLoadingMoreQuotes) {
       setState(() => _isLoadingMoreQuotes = true);
-
+      
       final provider = context.read<QuoteProvider>();
       final newQuotes = <Quote>[];
-
+      
       for (int i = 0; i < 10; i++) {
         final randomQuote = await provider.getRandomQuote();
         if (randomQuote != null) {
           newQuotes.add(randomQuote);
         }
       }
-
+      
       if (mounted && newQuotes.isNotEmpty) {
         setState(() {
           _randomQuotes.addAll(newQuotes);
@@ -178,26 +193,37 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
       body: Column(
         children: [
-          // Nội dung chính - chiếm toàn bộ không gian còn lại
           Expanded(
             child: Center(
               child: ConstrainedBox(
                 constraints: BoxConstraints(
                   maxWidth: Responsive.maxContentWidth(context),
                 ),
-                child: _isSearching
-                    ? _buildSearchResults()
-                    : (_selectedIndex == 0
-                          ? _buildCategoriesView()
-                          : const FavoritesScreen()),
+                child: _isSearching 
+                    ? _buildSearchResults() 
+                    : (_selectedIndex == 0 
+                        ? _buildCategoriesView() 
+                        : const FavoritesScreen()),
               ),
             ),
           ),
-
-          // Banner ad ở dưới cùng (ngoài Expanded nên không che khuất)
+          
           if (_isHomeBannerAdLoaded && _homeBannerAd != null)
             Container(
-              color: Colors.white,
+              margin: EdgeInsets.only(
+                top: Responsive.padding(context, 4),
+                bottom: Responsive.padding(context, 4),
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
               child: SafeArea(
                 top: false,
                 child: SizedBox(
@@ -265,7 +291,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       },
     );
   }
-
+  
   Widget _buildSearchResults() {
     if (_isSearchLoading) {
       return const Center(
@@ -543,11 +569,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final spacing = Responsive.gridSpacing(context);
     final columns = Responsive.gridColumns(context);
     final padding = Responsive.padding(context, 16);
-
+    
     return CustomScrollView(
       slivers: [
-        SliverToBoxAdapter(child: _buildHorizontalQuotePager()),
-
+        SliverToBoxAdapter(
+          child: _buildHorizontalQuotePager(),
+        ),
+        
         SliverPadding(
           padding: EdgeInsets.only(
             left: padding,
@@ -562,47 +590,48 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               mainAxisSpacing: spacing,
               childAspectRatio: 0.75,
             ),
-            delegate: SliverChildBuilderDelegate((context, index) {
-              final category = categories[index];
-              return TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: Duration(milliseconds: 300 + (index * 50)),
-                curve: Curves.easeOut,
-                builder: (context, value, child) {
-                  return Transform.translate(
-                    offset: Offset(0, 30 * (1 - value)),
-                    child: Opacity(opacity: value, child: child),
-                  );
-                },
-                child: _buildCategoryCard(category),
-              );
-            }, childCount: categories.length),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final category = categories[index];
+                return TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  duration: Duration(milliseconds: 300 + (index * 50)),
+                  curve: Curves.easeOut,
+                  builder: (context, value, child) {
+                    return Transform.translate(
+                      offset: Offset(0, 30 * (1 - value)),
+                      child: Opacity(opacity: value, child: child),
+                    );
+                  },
+                  child: _buildCategoryCard(category),
+                );
+              },
+              childCount: categories.length,
+            ),
           ),
         ),
       ],
     );
   }
-
+  
   Widget _buildHorizontalQuotePager() {
     final spacing = Responsive.gridSpacing(context);
     final columns = Responsive.gridColumns(context);
     final padding = Responsive.padding(context, 16);
-
-    // Tính toán chiều cao pager dựa trên grid columns
+    
     final screenWidth = MediaQuery.of(context).size.width;
     final maxWidth = Responsive.maxContentWidth(context);
     final contentWidth = screenWidth < maxWidth ? screenWidth : maxWidth;
     final availableWidth = contentWidth - (padding * 2);
     final cardWidth = (availableWidth - (spacing * (columns - 1))) / columns;
-    final aspectRatio = 0.75; // Portrait ratio
+    final aspectRatio = 0.75;
     final pagerHeight = cardWidth / aspectRatio;
-
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(height: spacing),
-
-        // Pager với padding trái phải BẰNG với grid
+        
         Padding(
           padding: EdgeInsets.symmetric(horizontal: padding),
           child: SizedBox(
@@ -610,17 +639,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             child: _isLoadingRandomQuotes
                 ? _buildPagerLoadingState()
                 : _randomQuotes.isEmpty
-                ? _buildPagerEmptyState()
-                : _buildPagerContentClean(),
+                    ? _buildPagerEmptyState()
+                    : _buildPagerContentWithImages(),
           ),
         ),
-
+        
         SizedBox(height: spacing),
-
-        // Page indicators
+        
         if (!_isLoadingRandomQuotes && _randomQuotes.isNotEmpty)
-          Center(child: _buildPageIndicators()),
-
+          Center(
+            child: _buildPageIndicators(),
+          ),
+        
         SizedBox(height: spacing),
       ],
     );
@@ -648,7 +678,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Widget _buildPagerEmptyState() {
     final colors = [const Color(0xFF667eea), const Color(0xFF764ba2)];
-
+    
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -679,7 +709,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildPagerContentClean() {
+  // 🎨 NEW: Pager với ảnh nền
+  Widget _buildPagerContentWithImages() {
     return PageView.builder(
       controller: _quotePagerController,
       onPageChanged: (index) {
@@ -689,15 +720,91 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       itemCount: null,
       itemBuilder: (context, index) {
         final quoteIndex = index % _randomQuotes.length;
-        return _buildPagerCard(_randomQuotes[quoteIndex], index);
+        return _buildPagerCardWithImage(_randomQuotes[quoteIndex], index);
       },
     );
   }
 
-  Widget _buildPagerCard(Quote quote, int index) {
-    final colors = ImageManagerEnhanced.getGradientForQuote(quote.id!);
+  // 🎨 NEW: Pager card với ảnh nền (giống Category Card)
+  Widget _buildPagerCardWithImage(Quote quote, int index) {
     final padding = Responsive.padding(context, 20);
-
+    
+    // Random ảnh từ danh sách ảnh có sẵn
+    final imageList = [
+		'assets/images/categories/i1043959780.jpg',
+		'assets/images/categories/i1050750000.jpg',
+		'assets/images/categories/i1053405882.jpg',
+		'assets/images/categories/i1082411378.jpg',
+		'assets/images/categories/i1130883848.jpg',
+		'assets/images/categories/i1132264290.jpg',
+		'assets/images/categories/i1137079196.jpg',
+		'assets/images/categories/i1161389146.jpg',
+		'assets/images/categories/i1167484409.jpg',
+		'assets/images/categories/i117146059.jpg',
+		'assets/images/categories/i1182434606.jpg',
+		'assets/images/categories/i1192260535.jpg',
+		'assets/images/categories/i1268487061.jpg',
+		'assets/images/categories/i1270042705.jpg',
+		'assets/images/categories/i1277015766.jpg',
+		'assets/images/categories/i1292399669.jpg',
+		'assets/images/categories/i1301592032.jpg',
+		'assets/images/categories/i1308867983.jpg',
+		'assets/images/categories/i1369254957.jpg',
+		'assets/images/categories/i1388623445.jpg',
+		'assets/images/categories/i1418527039.jpg',
+		'assets/images/categories/i1418783006.jpg',
+		'assets/images/categories/i1419410282.jpg',
+		'assets/images/categories/i1440351590.jpg',
+		'assets/images/categories/i1440503559.jpg',
+		'assets/images/categories/i1443409611.jpg',
+		'assets/images/categories/i1458782106.jpg',
+		'assets/images/categories/i146060521.jpg',
+		'assets/images/categories/i1473454504.jpg',
+		'assets/images/categories/i1477148178.jpg',
+		'assets/images/categories/i1478418006.jpg',
+		'assets/images/categories/i1493704782.jpg',
+		'assets/images/categories/i1696167872.jpg',
+		'assets/images/categories/i1739024655.jpg',
+		'assets/images/categories/i1791589607.jpg',
+		'assets/images/categories/i186534154.jpg',
+		'assets/images/categories/i2133340831.jpg',
+		'assets/images/categories/i471909179.jpg',
+		'assets/images/categories/i483724081.jpg',
+		'assets/images/categories/i498063665.jpg',
+		'assets/images/categories/i498309616.jpg',
+		'assets/images/categories/i511852760.jpg',
+		'assets/images/categories/i521975241.jpg',
+		'assets/images/categories/i526705622.jpg',
+		'assets/images/categories/i530185374.jpg',
+		'assets/images/categories/i534037450.jpg',
+		'assets/images/categories/i536291400.jpg',
+		'assets/images/categories/i537621432.jpg',
+		'assets/images/categories/i538653565.jpg',
+		'assets/images/categories/i543212762.jpg',
+		'assets/images/categories/i620951116.jpg',
+		'assets/images/categories/i621938662.jpg',
+		'assets/images/categories/i692869260.jpg',
+		'assets/images/categories/i694050758.jpg',
+		'assets/images/categories/i809971888.jpg',
+		'assets/images/categories/i860528958.jpg',
+		'assets/images/categories/i879845502.jpg',
+		'assets/images/categories/i884343584.jpg',
+		'assets/images/categories/i898869110.jpg',
+		'assets/images/categories/i899836048.jpg',
+		'assets/images/categories/i921341724.jpg',
+		'assets/images/categories/i935746242.jpg',
+		'assets/images/categories/i937057490.jpg',
+		'assets/images/categories/i959149062.jpg',
+		'assets/images/categories/i968886386.jpg',
+    ];
+    
+    // Chọn ảnh based on quote.id để consistent
+    final imageIndex = (quote.id ?? 0) % imageList.length;
+    final imagePath = imageList[imageIndex];
+    
+    // Fallback gradient nếu ảnh không load được
+    final fallbackColors = ImageManagerEnhanced.getGradientForQuote(quote.id!);
+    
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
       duration: const Duration(milliseconds: 400),
@@ -708,93 +815,154 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           child: Opacity(opacity: value, child: child),
         );
       },
-      child: GestureDetector(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  QuoteDetailScreen(quotes: [quote], initialIndex: 0),
+    child: GestureDetector(
+      onTap: () {
+        // 🔥 THAY ĐỔI TẠI ĐÂY:
+        // Tính toán index thực tế trong _randomQuotes list
+        final actualIndex = index % _randomQuotes.length;
+        
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => QuoteDetailScreen(
+              quotes: _randomQuotes,  // ← Truyền toàn bộ list thay vì [quote]
+              initialIndex: actualIndex,  // ← Index thực tế trong list
             ),
-          );
-        },
+          ),
+        );
+      },
         child: Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: colors,
-              stops: const [0.0, 0.5, 1.0],
-            ),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: colors[0].withValues(alpha: 0.4),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
-          child: Stack(
-            children: [
-              Positioned(
-                top: -20,
-                right: -20,
-                child: Icon(
-                  Icons.format_quote,
-                  size: 120,
-                  color: Colors.white.withValues(alpha: 0.1),
-                ),
-              ),
-
-              Padding(
-                padding: EdgeInsets.all(padding),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        quote.text,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: Responsive.fontSize(context, 15),
-                          fontWeight: FontWeight.w600,
-                          height: 1.4,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Background: Ảnh hoặc Gradient fallback
+                Image.asset(
+                  imagePath,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: fallbackColors,
+                          stops: const [0.0, 0.5, 1.0],
                         ),
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-
-                    SizedBox(height: Responsive.padding(context, 12)),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '- ${quote.author}',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.9),
-                              fontSize: Responsive.fontSize(context, 13),
-                              fontStyle: FontStyle.italic,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (quote.isFavorite)
-                          Icon(
-                            Icons.favorite,
-                            color: Colors.white,
-                            size: Responsive.fontSize(context, 18),
-                          ),
-                      ],
-                    ),
-                  ],
+                    );
+                  },
                 ),
-              ),
-            ],
+                
+                // Dark gradient overlay để text dễ đọc
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.4),
+                        Colors.black.withValues(alpha: 0.7),
+                      ],
+                      stops: const [0.0, 1.0],
+                    ),
+                  ),
+                ),
+                
+                // Quote icon decoration
+                Positioned(
+                  top: -20,
+                  right: -20,
+                  child: Icon(
+                    Icons.format_quote,
+                    size: 120,
+                    color: Colors.white.withValues(alpha: 0.15),
+                  ),
+                ),
+                
+                // Content
+                Padding(
+                  padding: EdgeInsets.all(padding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          quote.text,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: Responsive.fontSize(context, 15),
+                            fontWeight: FontWeight.w700,
+                            height: 1.4,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withValues(alpha: 0.5),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      
+                      SizedBox(height: Responsive.padding(context, 12)),
+                      
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '- ${quote.author}',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: Responsive.fontSize(context, 13),
+                                fontStyle: FontStyle.italic,
+                                fontWeight: FontWeight.w600,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black.withValues(alpha: 0.5),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (quote.isFavorite)
+                            Container(
+                              padding: EdgeInsets.all(Responsive.padding(context, 6)),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withValues(alpha: 0.9),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.favorite,
+                                color: Colors.white,
+                                size: Responsive.fontSize(context, 16),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -803,25 +971,26 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Widget _buildPageIndicators() {
     final poolPosition = _currentQuotePage % _quotesPoolSize;
-
+    
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
-      children: List.generate(_quotesPoolSize.clamp(0, 10), (index) {
-        final isActive = index == poolPosition;
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          margin: EdgeInsets.symmetric(
-            horizontal: Responsive.padding(context, 4),
-          ),
-          width: isActive ? 24.0 : 8.0,
-          height: 8.0,
-          decoration: BoxDecoration(
-            color: isActive ? Colors.deepPurple : Colors.grey[400],
-            borderRadius: BorderRadius.circular(4),
-          ),
-        );
-      }),
+      children: List.generate(
+        _quotesPoolSize.clamp(0, 10),
+        (index) {
+          final isActive = index == poolPosition;
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            margin: EdgeInsets.symmetric(horizontal: Responsive.padding(context, 4)),
+            width: isActive ? 24.0 : 8.0,
+            height: 8.0,
+            decoration: BoxDecoration(
+              color: isActive ? Colors.deepPurple : Colors.grey[400],
+              borderRadius: BorderRadius.circular(4),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -953,12 +1122,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     );
   }
-
+  
   Widget _buildCategoryCard(Category category) {
     final imagePath = CategoryImageManager.getImagePath(category.name);
-    final fallbackColors = CategoryImageManager.getFallbackGradient(
-      category.name,
-    );
+    final fallbackColors = CategoryImageManager.getFallbackGradient(category.name);
 
     return Hero(
       tag: 'category_${category.id}',
@@ -996,7 +1163,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       imagePath,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
-                        // Fallback to gradient if image fails
                         return Container(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
@@ -1018,7 +1184,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         ),
                       ),
                     ),
-
+                  
                   // Dark gradient overlay for text readability
                   Container(
                     decoration: BoxDecoration(
@@ -1033,7 +1199,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       ),
                     ),
                   ),
-
+                  
                   // Content
                   Padding(
                     padding: EdgeInsets.all(Responsive.padding(context, 16)),
@@ -1060,9 +1226,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-
+                        
                         SizedBox(height: Responsive.padding(context, 8)),
-
+                        
                         // Decorative line
                         Container(
                           width: 40,

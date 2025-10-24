@@ -25,7 +25,7 @@ class AdsService {
     await MobileAds.instance.initialize();
   }
 
-  // Load Banner Ad
+  // Load Banner Ad (Standard)
   Future<BannerAd?> loadBannerAd() async {
     try {
       final BannerAd bannerAd = BannerAd(
@@ -57,27 +57,79 @@ class AdsService {
     }
   }
 
+  // Load Adaptive Banner Ad (NEW)
+  Future<BannerAd?> loadAdaptiveBannerAd(AdSize size) async {
+    try {
+      final BannerAd bannerAd = BannerAd(
+        adUnitId: bannerAdUnitId,
+        request: const AdRequest(),
+        size: size,  // Use adaptive size
+        listener: BannerAdListener(
+          onAdLoaded: (Ad ad) {
+            print('✓ Adaptive Banner ad loaded (${size.width}x${size.height})');
+          },
+          onAdFailedToLoad: (Ad ad, LoadAdError error) {
+            print('✗ Adaptive Banner ad failed to load: $error');
+            ad.dispose();
+          },
+          onAdOpened: (Ad ad) {
+            print('Adaptive Banner ad opened');
+          },
+          onAdClosed: (Ad ad) {
+            print('Adaptive Banner ad closed');
+          },
+        ),
+      );
+
+      await bannerAd.load();
+      return bannerAd;
+    } catch (e) {
+      print('Error loading adaptive banner ad: $e');
+      return null;
+    }
+  }
+
+  // Helper: Get Adaptive Banner Size for current screen width
+  Future<AdSize?> getAdaptiveBannerSize(int screenWidth) async {
+    try {
+      final AdSize? size = await AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(
+        screenWidth,
+      );
+      
+      if (size == null) {
+        print('Unable to get adaptive banner size');
+        return null;
+      }
+      
+      print('Adaptive banner size: ${size.width}x${size.height}');
+      return size;
+    } catch (e) {
+      print('Error getting adaptive banner size: $e');
+      return null;
+    }
+  }
+
   // Load Interstitial Ad
-Future<InterstitialAd?> loadInterstitialAd() async {
-  final completer = Completer<InterstitialAd?>();
+  Future<InterstitialAd?> loadInterstitialAd() async {
+    final completer = Completer<InterstitialAd?>();
 
-  InterstitialAd.load(
-    adUnitId: interstitialAdUnitId,
-    request: const AdRequest(),
-    adLoadCallback: InterstitialAdLoadCallback(
-      onAdLoaded: (InterstitialAd ad) {
-        print('✓ Interstitial ad loaded');
-        completer.complete(ad);
-      },
-      onAdFailedToLoad: (LoadAdError error) {
-        print('✗ Interstitial ad failed to load: $error');
-        completer.complete(null);
-      },
-    ),
-  );
+    InterstitialAd.load(
+      adUnitId: interstitialAdUnitId,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (InterstitialAd ad) {
+          print('✓ Interstitial ad loaded');
+          completer.complete(ad);
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          print('✗ Interstitial ad failed to load: $error');
+          completer.complete(null);
+        },
+      ),
+    );
 
-  return completer.future;
-}
+    return completer.future;
+  }
 
   // Load Native Ad
   Future<NativeAd?> loadNativeAd() async {
