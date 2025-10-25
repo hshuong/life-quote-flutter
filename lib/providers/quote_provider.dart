@@ -1,6 +1,7 @@
 // lib/providers/quote_provider.dart
 
-import 'package:flutter/foundation.dart';
+//import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import '../models/category.dart' as app_models;
 import '../models/quote.dart';
 import '../database/database_helper.dart';
@@ -33,7 +34,7 @@ class QuoteProvider with ChangeNotifier {
     return _quotesByCategory[categoryId] ?? [];
   }
 
-  /// Load tất cả categories từ database
+/// Load tất cả categories từ database
   /// Chỉ load 1 lần, các lần sau dùng cache
   Future<void> loadCategories() async {
     // Nếu đã load rồi thì không load lại
@@ -42,9 +43,19 @@ class QuoteProvider with ChangeNotifier {
       return;
     }
 
+    // ✅ FIX: Kiểm tra nếu đang loading thì không load lại
+    if (_isLoadingCategories) {
+      debugPrint('📚 Categories already loading, skipping...');
+      return;
+    }
+
     _isLoadingCategories = true;
     _error = null;
-    notifyListeners(); // Báo UI update (hiển thị loading)
+    
+    // ✅ FIX: Dùng SchedulerBinding để tránh notify trong build phase
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notifyListeners(); // Báo UI update (hiển thị loading)
+    });
 
     try {
       _categories = await DatabaseHelper.instance.getAllCategories();

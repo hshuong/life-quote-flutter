@@ -1,18 +1,18 @@
 // lib/utils/image_manager_enhanced.dart
+// COMPLETE FIX: Improved gradients + weighted luminance
 
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
 /// Enhanced version với 3-color gradients, animations, và decorative elements
 class ImageManagerEnhanced {
-  /// UPGRADE: 3-color gradients thay vì 2-color
-  /// Tạo depth và visual interest nhiều hơn
+  /// UPGRADE: 3-color gradients với màu được tối ưu cho khả năng đọc
   static final List<List<Color>> backgroundGradients = [
     // Gradient 0: Purple Dream (enhanced)
     [
       const Color(0xFF667eea),
       const Color(0xFF764ba2),
-      const Color(0xFF5b42b8), // Thêm màu thứ 3
+      const Color(0xFF5b42b8),
     ],
     
     // Gradient 1: Sunset Orange (enhanced)
@@ -85,14 +85,14 @@ class ImageManagerEnhanced {
       const Color(0xFFF37335),
     ],
     
-    // Gradient 11: Fresh Turboscent (enhanced)
+    // ✅ FIXED: Gradient 11 - Fresh Turboscent (tối hơn để dễ đọc)
     [
-      const Color(0xFFF1F2B5),
-      const Color(0xFF8ab88e),
-      const Color(0xFF135058),
+      const Color(0xFFb8ba85), // Vàng ô liu đậm (từ F1F2B5)
+      const Color(0xFF6a9070), // Xanh lá đậm (từ 8ab88e)
+      const Color(0xFF135058), // Xanh đậm tối
     ],
     
-    // Gradient 12: Green to Dark (enhanced)
+    // Gradient 12: Green to Dark (enhanced) - GIỮ NGUYÊN
     [
       const Color(0xFF283c86),
       const Color(0xFF367268),
@@ -164,7 +164,7 @@ class ImageManagerEnhanced {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: colors,
-        stops: const [0.0, 0.5, 1.0], // 3 điểm chuyển màu
+        stops: const [0.0, 0.5, 1.0],
       ),
     );
   }
@@ -173,8 +173,7 @@ class ImageManagerEnhanced {
   static BoxDecoration getAnimatedDecoration(int quoteId, double animationValue) {
     final colors = getGradientForQuote(quoteId);
     
-    // Rotation angle changes based on animation value
-    final angle = animationValue * math.pi / 4; // 0 to 45 degrees
+    final angle = animationValue * math.pi / 4;
     
     return BoxDecoration(
       gradient: LinearGradient(
@@ -192,18 +191,24 @@ class ImageManagerEnhanced {
     );
   }
 
-  /// Tính màu text phù hợp (giữ nguyên logic cũ)
+  /// ✅ IMPROVED: Tính màu text với weighted luminance
+  /// Ưu tiên màu đầu (50%) và giữa (30%) vì chiếm diện tích lớn hơn
   static Color getTextColor(int quoteId) {
     final colors = getGradientForQuote(quoteId);
     
-    // Tính độ sáng trung bình của cả 3 màu
+    // Tính độ sáng của từng màu
     final brightness1 = colors[0].computeLuminance();
     final brightness2 = colors[1].computeLuminance();
     final brightness3 = colors.length > 2 ? colors[2].computeLuminance() : brightness2;
     
-    final averageBrightness = (brightness1 + brightness2 + brightness3) / 3;
+    // Weighted average: 50% màu đầu + 30% màu giữa + 20% màu cuối
+    final weightedBrightness = 
+        (brightness1 * 0.5) + 
+        (brightness2 * 0.3) + 
+        (brightness3 * 0.2);
     
-    return averageBrightness > 0.5 ? Colors.black87 : Colors.white;
+    // Threshold 0.45 để chữ đen xuất hiện sớm hơn trên nền sáng
+    return weightedBrightness > 0.45 ? Colors.black87 : Colors.white;
   }
 
   /// ENHANCED: Category colors với 3 màu

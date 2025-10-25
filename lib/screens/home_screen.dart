@@ -1,5 +1,5 @@
 // lib/screens/home_screen.dart
-// UPDATED: HorizontalQuotePager sử dụng ảnh nền như Category Cards
+// FIXED: Navigation state issue - rebuild when returning
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -23,7 +23,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, RouteAware {
   int _selectedIndex = 0;
   
   bool _isSearching = false;
@@ -56,15 +56,60 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       viewportFraction: 1.0,
     );
     
+    _initializeScreen();
+  }
+
+  void _initializeScreen() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<QuoteProvider>().loadCategories();
-      context.read<QuoteProvider>().loadFavoriteQuotes();
-      _loadRandomQuotesForPager();
-      _loadHomeBannerAd();
+      if (mounted) {
+        final provider = context.read<QuoteProvider>();
+        
+        // Chỉ load nếu chưa có data
+        if (provider.categories.isEmpty) {
+          provider.loadCategories();
+        }
+        
+        if (provider.favoriteQuotes.isEmpty) {
+          provider.loadFavoriteQuotes();
+        }
+        
+        if (_randomQuotes.isEmpty) {
+          _loadRandomQuotesForPager();
+        }
+        
+        if (!_isHomeBannerAdLoaded) {
+          _loadHomeBannerAd();
+        }
+      }
     });
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reload data khi quay lại screen
+    _refreshDataIfNeeded();
+  }
+
+  void _refreshDataIfNeeded() {
+    if (mounted) {
+      final provider = context.read<QuoteProvider>();
+      
+      // Nếu categories trống, reload
+      if (provider.categories.isEmpty && !provider.isLoadingCategories) {
+        provider.loadCategories();
+      }
+      
+      // Nếu random quotes trống, reload
+      if (_randomQuotes.isEmpty && !_isLoadingRandomQuotes) {
+        _loadRandomQuotesForPager();
+      }
+    }
+  }
+
   Future<void> _loadHomeBannerAd() async {
+    if (!mounted) return;
+    
     final padding = Responsive.padding(context, 16);
     final screenWidth = MediaQuery.of(context).size.width;
     final maxWidth = Responsive.maxContentWidth(context);
@@ -98,6 +143,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _loadRandomQuotesForPager() async {
+    if (!mounted) return;
+    
     setState(() => _isLoadingRandomQuotes = true);
     
     final provider = context.read<QuoteProvider>();
@@ -408,6 +455,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final padding = Responsive.padding(context, 16);
     final fontSize = Responsive.fontSize(context, 16);
     final authorSize = Responsive.fontSize(context, 14);
+      // ✅ THÊM DÒNG NÀY:
+    final textColor = ImageManagerEnhanced.getTextColor(quote.id!);
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
@@ -428,6 +477,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   QuoteDetailScreen(quotes: quotes, initialIndex: index),
             ),
           );
+          // Refresh khi quay lại
+          if (mounted) {
+            _refreshDataIfNeeded();
+          }
         },
         child: Container(
           margin: EdgeInsets.only(bottom: padding),
@@ -458,7 +511,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 Text(
                   quote.text,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: textColor,
                     fontSize: fontSize,
                     fontWeight: FontWeight.w500,
                     height: 1.4,
@@ -474,7 +527,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       child: Text(
                         '- ${quote.author}',
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.9),
+                          color: textColor.withValues(alpha: 0.9), 
                           fontSize: authorSize,
                           fontStyle: FontStyle.italic,
                         ),
@@ -485,7 +538,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     if (quote.isFavorite)
                       Icon(
                         Icons.favorite,
-                        color: Colors.white,
+                        color: textColor,
                         size: Responsive.fontSize(context, 20),
                       ),
                   ],
@@ -588,7 +641,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               crossAxisCount: columns,
               crossAxisSpacing: spacing,
               mainAxisSpacing: spacing,
-              childAspectRatio: 0.75,
+              childAspectRatio: Responsive.categoryCardAspectRatio(context),
             ),
             delegate: SliverChildBuilderDelegate(
               (context, index) {
@@ -624,7 +677,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final contentWidth = screenWidth < maxWidth ? screenWidth : maxWidth;
     final availableWidth = contentWidth - (padding * 2);
     final cardWidth = (availableWidth - (spacing * (columns - 1))) / columns;
-    final aspectRatio = 0.75;
+    final aspectRatio = Responsive.categoryCardAspectRatio(context);
     final pagerHeight = cardWidth / aspectRatio;
     
     return Column(
@@ -709,7 +762,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // 🎨 NEW: Pager với ảnh nền
   Widget _buildPagerContentWithImages() {
     return PageView.builder(
       controller: _quotePagerController,
@@ -717,7 +769,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         setState(() => _currentQuotePage = index);
         _loadMoreQuotesIfNeeded(index);
       },
-      itemCount: null,
+      // 🔧 FIX: Giới hạn số lượng pages để tránh load quá nhiều images
+      itemCount: _randomQuotes.length * 3, // Giới hạn 3 vòng lặp
       itemBuilder: (context, index) {
         final quoteIndex = index % _randomQuotes.length;
         return _buildPagerCardWithImage(_randomQuotes[quoteIndex], index);
@@ -725,11 +778,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  // 🎨 NEW: Pager card với ảnh nền (giống Category Card)
   Widget _buildPagerCardWithImage(Quote quote, int index) {
     final padding = Responsive.padding(context, 20);
+    //final textColor = ImageManagerEnhanced.getTextColor(quote.id!);
+    const textColor = Colors.white;
     
-    // Random ảnh từ danh sách ảnh có sẵn
     final imageList = [
 		'assets/images/categories/i1043959780.jpg',
 		'assets/images/categories/i1050750000.jpg',
@@ -798,11 +851,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 		'assets/images/categories/i968886386.jpg',
     ];
     
-    // Chọn ảnh based on quote.id để consistent
     final imageIndex = (quote.id ?? 0) % imageList.length;
     final imagePath = imageList[imageIndex];
-    
-    // Fallback gradient nếu ảnh không load được
     final fallbackColors = ImageManagerEnhanced.getGradientForQuote(quote.id!);
     
     return TweenAnimationBuilder<double>(
@@ -815,22 +865,25 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           child: Opacity(opacity: value, child: child),
         );
       },
-    child: GestureDetector(
-      onTap: () {
-        // 🔥 THAY ĐỔI TẠI ĐÂY:
-        // Tính toán index thực tế trong _randomQuotes list
-        final actualIndex = index % _randomQuotes.length;
-        
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => QuoteDetailScreen(
-              quotes: _randomQuotes,  // ← Truyền toàn bộ list thay vì [quote]
-              initialIndex: actualIndex,  // ← Index thực tế trong list
+      child: GestureDetector(
+        onTap: () async {
+          final actualIndex = index % _randomQuotes.length;
+          
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => QuoteDetailScreen(
+                quotes: _randomQuotes,
+                initialIndex: actualIndex,
+              ),
             ),
-          ),
-        );
-      },
+          );
+          
+          // Refresh khi quay lại
+          if (mounted) {
+            _refreshDataIfNeeded();
+          }
+        },
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
@@ -847,7 +900,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // Background: Ảnh hoặc Gradient fallback
                 Image.asset(
                   imagePath,
                   fit: BoxFit.cover,
@@ -865,22 +917,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   },
                 ),
                 
-                // Dark gradient overlay để text dễ đọc
                 Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Colors.black.withValues(alpha: 0.4),
-                        Colors.black.withValues(alpha: 0.7),
+                        Colors.black.withValues(alpha: 0.2),
+                        Colors.black.withValues(alpha: 0.5),
                       ],
                       stops: const [0.0, 1.0],
                     ),
                   ),
                 ),
                 
-                // Quote icon decoration
                 Positioned(
                   top: -20,
                   right: -20,
@@ -891,7 +941,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ),
                 ),
                 
-                // Content
                 Padding(
                   padding: EdgeInsets.all(padding),
                   child: Column(
@@ -902,7 +951,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         child: Text(
                           quote.text,
                           style: TextStyle(
-                            color: Colors.white,
+                            color: textColor,
                             fontSize: Responsive.fontSize(context, 15),
                             fontWeight: FontWeight.w700,
                             height: 1.4,
@@ -927,7 +976,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             child: Text(
                               '- ${quote.author}',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: textColor,
                                 fontSize: Responsive.fontSize(context, 13),
                                 fontStyle: FontStyle.italic,
                                 fontWeight: FontWeight.w600,
@@ -1028,6 +1077,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               onPressed: () {
                 provider.clearCache();
                 provider.loadCategories();
+                _loadRandomQuotesForPager();
               },
               icon: const Icon(Icons.refresh),
               label: Text(
@@ -1118,6 +1168,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               color: Colors.grey[600],
             ),
           ),
+          SizedBox(height: Responsive.padding(context, 16)),
+          ElevatedButton.icon(
+            onPressed: () {
+              context.read<QuoteProvider>().loadCategories();
+              _loadRandomQuotesForPager();
+            },
+            icon: const Icon(Icons.refresh),
+            label: const Text('Reload'),
+          ),
         ],
       ),
     );
@@ -1132,13 +1191,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
-            Navigator.push(
+          onTap: () async {
+            await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => QuoteListScreen(category: category),
               ),
             );
+            // Refresh khi quay lại
+            if (mounted) {
+              _refreshDataIfNeeded();
+            }
           },
           borderRadius: BorderRadius.circular(20),
           child: Container(
@@ -1157,7 +1220,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Background: Image or Gradient
                   if (imagePath != null)
                     Image.asset(
                       imagePath,
@@ -1185,7 +1247,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       ),
                     ),
                   
-                  // Dark gradient overlay for text readability
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -1200,14 +1261,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     ),
                   ),
                   
-                  // Content
                   Padding(
                     padding: EdgeInsets.all(Responsive.padding(context, 16)),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.end,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Category name
                         Text(
                           category.name.toUpperCase(),
                           style: TextStyle(
@@ -1229,7 +1288,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         
                         SizedBox(height: Responsive.padding(context, 8)),
                         
-                        // Decorative line
                         Container(
                           width: 40,
                           height: 3,

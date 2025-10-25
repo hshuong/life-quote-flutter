@@ -1,5 +1,5 @@
 // lib/screens/favorites_screen.dart
-// Fixed: KHÔNG load banner ad riêng vì đã có trong HomeScreen
+// FIXED: Dynamic text color based on gradient brightness
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -66,6 +66,9 @@ class FavoritesScreen extends StatelessWidget {
             final fontSize = Responsive.fontSize(context, 16);
             final authorSize = Responsive.fontSize(context, 14);
             final iconSize = Responsive.fontSize(context, 24);
+            
+            // ✅ FIX: Tính màu text động
+            final textColor = ImageManagerEnhanced.getTextColor(quote.id!);
 
             return TweenAnimationBuilder<double>(
               tween: Tween(begin: 0.0, end: 1.0),
@@ -122,7 +125,7 @@ class FavoritesScreen extends StatelessWidget {
                               child: Text(
                                 quote.text,
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: textColor, // ✅ FIXED
                                   fontSize: fontSize,
                                   fontWeight: FontWeight.w500,
                                   height: 1.4,
@@ -134,7 +137,7 @@ class FavoritesScreen extends StatelessWidget {
                             SizedBox(width: Responsive.padding(context, 8)),
                             Icon(
                               Icons.favorite,
-                              color: Colors.white,
+                              color: textColor, // ✅ FIXED
                               size: iconSize,
                             ),
                           ],
@@ -143,7 +146,7 @@ class FavoritesScreen extends StatelessWidget {
                         Text(
                           '- ${quote.author}',
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.9),
+                            color: textColor.withValues(alpha: 0.9), // ✅ FIXED
                             fontSize: authorSize,
                             fontStyle: FontStyle.italic,
                           ),
