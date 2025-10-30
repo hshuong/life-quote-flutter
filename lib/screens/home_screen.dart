@@ -1,5 +1,5 @@
 // lib/screens/home_screen.dart
-// FIXED: Navigation state issue - rebuild when returning
+// UPDATED: Using Theme instead of hard-coded colors
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -64,7 +64,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
       if (mounted) {
         final provider = context.read<QuoteProvider>();
         
-        // Chỉ load nếu chưa có data
         if (provider.categories.isEmpty) {
           provider.loadCategories();
         }
@@ -87,7 +86,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Reload data khi quay lại screen
     _refreshDataIfNeeded();
   }
 
@@ -95,12 +93,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     if (mounted) {
       final provider = context.read<QuoteProvider>();
       
-      // Nếu categories trống, reload
       if (provider.categories.isEmpty && !provider.isLoadingCategories) {
         provider.loadCategories();
       }
       
-      // Nếu random quotes trống, reload
       if (_randomQuotes.isEmpty && !_isLoadingRandomQuotes) {
         _loadRandomQuotesForPager();
       }
@@ -119,7 +115,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     final size = await AdsService().getAdaptiveBannerSize(bannerWidth);
     
     if (size == null) {
-      print('Unable to get adaptive banner size');
+      //print('Unable to get adaptive banner size');
       return;
     }
     
@@ -212,14 +208,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context); // ✅ Get theme
     final showBottomNav = Responsive.showBottomNav(context);
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: theme.scaffoldBackgroundColor, // ✅ Use theme
       appBar: AppBar(
         title: _isSearching ? _buildSearchField() : _buildTitle(),
         centerTitle: true,
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: theme.appBarTheme.backgroundColor, // ✅ Use theme
         elevation: 0,
         actions: [
           IconButton(
@@ -286,7 +283,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
           ? BottomNavigationBar(
               currentIndex: _selectedIndex,
               onTap: (index) => setState(() => _selectedIndex = index),
-              selectedItemColor: Colors.deepPurple,
+              selectedItemColor: theme.colorScheme.primary, // ✅ Use theme
               items: const [
                 BottomNavigationBarItem(
                   icon: Icon(Icons.category),
@@ -306,10 +303,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   Widget _buildTitle() {
     return Text(
       _selectedIndex == 0 ? 'Life Quotes' : 'Favorites',
-      style: TextStyle(
-        fontWeight: FontWeight.bold,
-        fontSize: Responsive.fontSize(context, 24),
-      ),
+      style: Theme.of(context).appBarTheme.titleTextStyle, // ✅ Use theme
     );
   }
 
@@ -340,9 +334,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   }
   
   Widget _buildSearchResults() {
+    final theme = Theme.of(context);
+    
     if (_isSearchLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: Colors.deepPurple),
+      return Center(
+        child: CircularProgressIndicator(
+          color: theme.colorScheme.primary, // ✅ Use theme
+        ),
       );
     }
 
@@ -354,23 +352,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             Icon(
               Icons.search,
               size: Responsive.fontSize(context, 80),
-              color: Colors.grey[400],
+              color: theme.textTheme.bodyMedium?.color?.withValues(alpha:0.5), // ✅ Use theme
             ),
             SizedBox(height: Responsive.padding(context, 16)),
             Text(
               'Search for quotes',
-              style: TextStyle(
-                fontSize: Responsive.fontSize(context, 18),
-                color: Colors.grey[600],
-              ),
+              style: theme.textTheme.headlineSmall, // ✅ Use theme
             ),
             SizedBox(height: Responsive.padding(context, 8)),
             Text(
               'Enter keywords to find quotes',
-              style: TextStyle(
-                fontSize: Responsive.fontSize(context, 14),
-                color: Colors.grey[500],
-              ),
+              style: theme.textTheme.bodyMedium, // ✅ Use theme
             ),
           ],
         ),
@@ -385,24 +377,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             Icon(
               Icons.search_off,
               size: Responsive.fontSize(context, 80),
-              color: Colors.grey[400],
+              color: theme.textTheme.bodyMedium?.color?.withValues(alpha:0.5),
             ),
             SizedBox(height: Responsive.padding(context, 16)),
             Text(
               'No results found',
-              style: TextStyle(
-                fontSize: Responsive.fontSize(context, 18),
+              style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Colors.grey[700],
               ),
             ),
             SizedBox(height: Responsive.padding(context, 8)),
             Text(
               'Try different keywords',
-              style: TextStyle(
-                fontSize: Responsive.fontSize(context, 14),
-                color: Colors.grey[500],
-              ),
+              style: theme.textTheme.bodyMedium,
             ),
           ],
         ),
@@ -413,21 +400,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
       children: [
         Container(
           padding: EdgeInsets.all(Responsive.padding(context, 16)),
-          color: Colors.deepPurple.withValues(alpha: 0.1),
+          color: theme.colorScheme.primary.withValues(alpha: 0.1), // ✅ Use theme
           child: Row(
             children: [
               Icon(
                 Icons.search,
                 size: Responsive.fontSize(context, 20),
-                color: Colors.deepPurple,
+                color: theme.colorScheme.primary,
               ),
               SizedBox(width: Responsive.padding(context, 8)),
               Text(
                 'Found ${_searchResults.length} quote${_searchResults.length > 1 ? 's' : ''}',
-                style: TextStyle(
-                  fontSize: Responsive.fontSize(context, 14),
-                  fontWeight: FontWeight.w600,
-                  color: Colors.deepPurple,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.primary,
                 ),
               ),
             ],
@@ -455,7 +440,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     final padding = Responsive.padding(context, 16);
     final fontSize = Responsive.fontSize(context, 16);
     final authorSize = Responsive.fontSize(context, 14);
-      // ✅ THÊM DÒNG NÀY:
     final textColor = ImageManagerEnhanced.getTextColor(quote.id!);
 
     return TweenAnimationBuilder<double>(
@@ -477,7 +461,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                   QuoteDetailScreen(quotes: quotes, initialIndex: index),
             ),
           );
-          // Refresh khi quay lại
           if (mounted) {
             _refreshDataIfNeeded();
           }
@@ -552,28 +535,33 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   }
 
   Widget _buildDrawer() {
+    final theme = Theme.of(context);
+    
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
           DrawerHeader(
-            decoration: const BoxDecoration(color: Colors.deepPurple),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary, // ✅ Use theme
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
-              children: const [
+              children: [
                 Text(
                   'Life Quotes',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    color: theme.colorScheme.onPrimary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
                   'Inspire your day',
-                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onPrimary.withValues(alpha: 0.8),
+                  ),
                 ),
               ],
             ),
@@ -769,8 +757,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
         setState(() => _currentQuotePage = index);
         _loadMoreQuotesIfNeeded(index);
       },
-      // 🔧 FIX: Giới hạn số lượng pages để tránh load quá nhiều images
-      itemCount: _randomQuotes.length * 3, // Giới hạn 3 vòng lặp
+      itemCount: _randomQuotes.length * 3,
       itemBuilder: (context, index) {
         final quoteIndex = index % _randomQuotes.length;
         return _buildPagerCardWithImage(_randomQuotes[quoteIndex], index);
@@ -780,7 +767,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
 
   Widget _buildPagerCardWithImage(Quote quote, int index) {
     final padding = Responsive.padding(context, 20);
-    //final textColor = ImageManagerEnhanced.getTextColor(quote.id!);
     const textColor = Colors.white;
     
     final imageList = [
@@ -879,7 +865,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             ),
           );
           
-          // Refresh khi quay lại
           if (mounted) {
             _refreshDataIfNeeded();
           }
@@ -1019,6 +1004,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   }
 
   Widget _buildPageIndicators() {
+    final theme = Theme.of(context);
     final poolPosition = _currentQuotePage % _quotesPoolSize;
     
     return Row(
@@ -1034,7 +1020,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             width: isActive ? 24.0 : 8.0,
             height: 8.0,
             decoration: BoxDecoration(
-              color: isActive ? Colors.deepPurple : Colors.grey[400],
+              color: isActive 
+                  ? theme.colorScheme.primary // ✅ Use theme
+                  : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(4),
             ),
           );
@@ -1044,6 +1032,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   }
 
   Widget _buildErrorState(QuoteProvider provider) {
+    final theme = Theme.of(context);
+    
     return Center(
       child: Padding(
         padding: EdgeInsets.all(Responsive.padding(context, 32)),
@@ -1053,23 +1043,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             Icon(
               Icons.error_outline,
               size: Responsive.fontSize(context, 64),
-              color: Colors.red,
+              color: theme.colorScheme.error, // ✅ Use theme
             ),
             SizedBox(height: Responsive.padding(context, 16)),
             Text(
               'Oops! Something went wrong',
-              style: TextStyle(
-                fontSize: Responsive.fontSize(context, 18),
+              style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             SizedBox(height: Responsive.padding(context, 8)),
             Text(
               provider.error!,
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: Responsive.fontSize(context, 14),
-              ),
+              style: theme.textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
             SizedBox(height: Responsive.padding(context, 24)),
@@ -1151,6 +1137,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   }
 
   Widget _buildEmptyState() {
+    final theme = Theme.of(context);
+    
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -1158,15 +1146,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
           Icon(
             Icons.category_outlined,
             size: Responsive.fontSize(context, 80),
-            color: Colors.grey[400],
+            color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
           ),
           SizedBox(height: Responsive.padding(context, 16)),
           Text(
             'No categories available',
-            style: TextStyle(
-              fontSize: Responsive.fontSize(context, 18),
-              color: Colors.grey[600],
-            ),
+            style: theme.textTheme.headlineSmall,
           ),
           SizedBox(height: Responsive.padding(context, 16)),
           ElevatedButton.icon(
@@ -1198,7 +1183,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                 builder: (context) => QuoteListScreen(category: category),
               ),
             );
-            // Refresh khi quay lại
             if (mounted) {
               _refreshDataIfNeeded();
             }

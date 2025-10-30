@@ -1,5 +1,5 @@
 // lib/screens/quote_detail_screen.dart
-// Optimized: Interstitial ads không che khuất, hiển thị giữa các quote
+// UPDATED: Using Theme for SnackBar colors
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -34,7 +34,6 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
-  // Ads variables
   int _quoteViewCount = 0;
   InterstitialAd? _interstitialAd;
   bool _isInterstitialAdLoaded = false;
@@ -57,8 +56,6 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
     );
     
     _fadeController.forward();
-    
-    // Load interstitial ad
     _loadInterstitialAd();
   }
 
@@ -73,17 +70,14 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
     });
   }
 
-  // Show interstitial ad after viewing 5 quotes
   void _showInterstitialAdIfReady() {
     _quoteViewCount++;
 
     if (_quoteViewCount >= 5 && _isInterstitialAdLoaded && _interstitialAd != null) {
-      print('🎯 Showing interstitial ad (quote view count: $_quoteViewCount)');
+      //print('🎯 Showing interstitial ad (quote view count: $_quoteViewCount)');
       AdsService().showInterstitialAd(_interstitialAd);
-      _quoteViewCount = 0; // Reset counter
+      _quoteViewCount = 0;
       _isInterstitialAdLoaded = false;
-
-      // Reload for next showing
       _loadInterstitialAd();
     }
   }
@@ -97,6 +91,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
   }
 
   Future<void> _toggleFavorite() async {
+    final theme = Theme.of(context); // ✅ Get theme
     final quote = quotes[currentIndex];
     final provider = context.read<QuoteProvider>();
     
@@ -124,7 +119,9 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
           ),
           duration: const Duration(seconds: 1),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: newStatus ? Colors.red : Colors.grey[800],
+          backgroundColor: newStatus 
+              ? Colors.red 
+              : theme.colorScheme.surface.withValues(alpha:0.9), // ✅ Use theme
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
@@ -132,6 +129,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
   }
 
   Future<void> _copyQuote() async {
+    final theme = Theme.of(context); // ✅ Get theme
     final quote = quotes[currentIndex];
     final textToCopy = '${quote.text}\n\n- ${quote.author}';
     
@@ -150,7 +148,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
           ),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: Colors.green,
+          backgroundColor: theme.colorScheme.secondary, // ✅ Use theme
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
@@ -167,10 +165,11 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
       await SharePlus.instance.share(ShareParams(text: textToShare));
     } catch (e) {
       if (mounted) {
+        final theme = Theme.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to share quote'),
-            backgroundColor: Colors.red,
+          SnackBar(
+            content: const Text('Failed to share quote'),
+            backgroundColor: theme.colorScheme.error, // ✅ Use theme
           ),
         );
       }
@@ -235,8 +234,6 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
               _fadeController.reset();
               _fadeController.forward();
               HapticFeedback.selectionClick();
-              
-              // Show interstitial ad after viewing multiple quotes
               _showInterstitialAdIfReady();
             },
             itemBuilder: (context, index) {
@@ -267,18 +264,15 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
       opacity: _fadeAnimation,
       child: Stack(
         children: [
-          // Background with gradient
           Container(
             decoration: decoration,
           ),
           
-          // Decorative geometric shapes
           ImageManagerEnhanced.buildDecorativeShapes(
             quoteId: quote.id!,
             screenSize: screenSize,
           ),
           
-          // Main content
           SafeArea(
             child: Center(
               child: ConstrainedBox(
@@ -294,7 +288,6 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Decorative quote icon
                       TweenAnimationBuilder<double>(
                         tween: Tween(begin: 0.0, end: 1.0),
                         duration: const Duration(milliseconds: 500),
@@ -310,7 +303,6 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
                       ),
                       SizedBox(height: Responsive.padding(context, 24)),
                       
-                      // Quote text
                       TweenAnimationBuilder<double>(
                         tween: Tween(begin: 0.0, end: 1.0),
                         duration: const Duration(milliseconds: 600),
@@ -336,7 +328,6 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
                       
                       SizedBox(height: Responsive.padding(context, 32)),
                       
-                      // Author
                       TweenAnimationBuilder<double>(
                         tween: Tween(begin: 0.0, end: 1.0),
                         duration: const Duration(milliseconds: 700),

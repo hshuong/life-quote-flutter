@@ -1,5 +1,5 @@
 // lib/screens/favorites_screen.dart
-// FIXED: Dynamic text color based on gradient brightness
+// UPDATED: Using Theme instead of hard-coded colors
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -13,6 +13,8 @@ class FavoritesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context); // ✅ Get theme
+    
     return Consumer<QuoteProvider>(
       builder: (context, provider, child) {
         final favorites = provider.favoriteQuotes;
@@ -28,24 +30,20 @@ class FavoritesScreen extends StatelessWidget {
                   Icon(
                     Icons.favorite_border,
                     size: Responsive.fontSize(context, 100),
-                    color: Colors.grey[400],
+                    color: theme.textTheme.bodyMedium?.color?.withValues(alpha:0.3), // ✅ Use theme
                   ),
                   SizedBox(height: Responsive.padding(context, 24)),
                   Text(
                     'No Favorite Quotes Yet',
-                    style: TextStyle(
-                      fontSize: Responsive.fontSize(context, 20),
+                    style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey[700],
                     ),
                   ),
                   SizedBox(height: Responsive.padding(context, 12)),
                   Text(
                     'Start adding quotes to your favorites\nby tapping the heart icon ❤️',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: Responsive.fontSize(context, 14),
-                      color: Colors.grey[500],
+                    style: theme.textTheme.bodyMedium?.copyWith(
                       height: 1.5,
                     ),
                   ),
@@ -66,8 +64,6 @@ class FavoritesScreen extends StatelessWidget {
             final fontSize = Responsive.fontSize(context, 16);
             final authorSize = Responsive.fontSize(context, 14);
             final iconSize = Responsive.fontSize(context, 24);
-            
-            // ✅ FIX: Tính màu text động
             final textColor = ImageManagerEnhanced.getTextColor(quote.id!);
 
             return TweenAnimationBuilder<double>(
@@ -125,7 +121,7 @@ class FavoritesScreen extends StatelessWidget {
                               child: Text(
                                 quote.text,
                                 style: TextStyle(
-                                  color: textColor, // ✅ FIXED
+                                  color: textColor,
                                   fontSize: fontSize,
                                   fontWeight: FontWeight.w500,
                                   height: 1.4,
@@ -137,7 +133,7 @@ class FavoritesScreen extends StatelessWidget {
                             SizedBox(width: Responsive.padding(context, 8)),
                             Icon(
                               Icons.favorite,
-                              color: textColor, // ✅ FIXED
+                              color: textColor,
                               size: iconSize,
                             ),
                           ],
@@ -146,7 +142,7 @@ class FavoritesScreen extends StatelessWidget {
                         Text(
                           '- ${quote.author}',
                           style: TextStyle(
-                            color: textColor.withValues(alpha: 0.9), // ✅ FIXED
+                            color: textColor.withValues(alpha: 0.9),
                             fontSize: authorSize,
                             fontStyle: FontStyle.italic,
                           ),

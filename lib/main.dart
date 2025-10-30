@@ -1,4 +1,5 @@
 // lib/main.dart
+// Enhanced with complete Material Design 3 theme
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,11 +12,8 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'services/ads_service.dart';
 
 void main() async {
-  // Đảm bảo Flutter đã được khởi tạo
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Mobile Ads
-  // Thêm test device ID để hiển thị test ads trên Samsung Fold 5
   await MobileAds.instance.updateRequestConfiguration(
     RequestConfiguration(
       testDeviceIds: ['93DC8935CA5C5D6E7F9B9C2D0C577EAA'],
@@ -23,13 +21,11 @@ void main() async {
   );
   await AdsService().initialize();
   
-  // Cài đặt orientation cho app (chỉ portrait)
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
-  // Cài đặt style cho system UI
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -47,7 +43,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Wrap app với Provider
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => QuoteProvider()),
@@ -55,51 +50,132 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Life Quotes',
         debugShowCheckedModeBanner: false,
-        theme: _buildTheme(),
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.light, // Change to ThemeMode.dark or ThemeMode.system
         home: const HomeScreen(),
       ),
     );
   }
+}
 
-  // Tạo theme cho app
-  ThemeData _buildTheme() {
-    final baseTheme = ThemeData(
-      primarySwatch: Colors.deepPurple,
-      scaffoldBackgroundColor: Colors.grey[100],
+/// 🎨 App Theme Configuration
+class AppTheme {
+  // Color Palette - Deep Teal & Navy Blue (Elegant & Professional)
+  static const Color primaryColor = Color(0xFF1a237e); // Deep Navy Blue
+  static const Color secondaryColor = Color(0xFF004d40); // Deep Teal
+  static const Color accentColor = Color(0xFF00897b); // Lighter Teal
+  static const Color backgroundColor = Color(0xFFF5F5F5); // Light Gray
+  static const Color surfaceColor = Color(0xFFFFFFFF); // White
+  static const Color errorColor = Color(0xFFD32F2F); // Red
+  
+  // Text Colors
+  static const Color textPrimaryLight = Color(0xFF212121); // Dark Gray
+  static const Color textSecondaryLight = Color(0xFF757575); // Medium Gray
+  static const Color textPrimaryDark = Color(0xFFFFFFFF); // White
+  static const Color textSecondaryDark = Color(0xFFB0BEC5); // Light Gray
+  
+  // 🌞 Light Theme
+  static ThemeData get lightTheme {
+    return ThemeData(
       useMaterial3: true,
+      brightness: Brightness.light,
       
-      // Sử dụng Google Fonts
-      textTheme: GoogleFonts.poppinsTextTheme(),
+      // Color Scheme
+      colorScheme: ColorScheme.light(
+        primary: primaryColor,
+        secondary: secondaryColor,
+        tertiary: accentColor,
+        surface: surfaceColor,
+        error: errorColor,
+        onPrimary: Colors.white,
+        onSecondary: Colors.white,
+        onSurface: textPrimaryLight,
+        onError: Colors.white,
+      ),
       
-      // AppBar theme
+      // Scaffold
+      scaffoldBackgroundColor: backgroundColor,
+      
+      // AppBar
       appBarTheme: AppBarTheme(
         elevation: 0,
         centerTitle: true,
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
         systemOverlayStyle: SystemUiOverlayStyle.light,
         titleTextStyle: GoogleFonts.poppins(
           fontSize: 24,
           fontWeight: FontWeight.bold,
           color: Colors.white,
+          letterSpacing: 0.5,
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(
+          color: Colors.white,
+          size: 24,
+        ),
       ),
       
-      // Color scheme
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: Colors.deepPurple,
-        brightness: Brightness.light,
+      // Text Theme
+      textTheme: GoogleFonts.poppinsTextTheme().copyWith(
+        displayLarge: GoogleFonts.poppins(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: textPrimaryLight,
+        ),
+        displayMedium: GoogleFonts.poppins(
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: textPrimaryLight,
+        ),
+        displaySmall: GoogleFonts.poppins(
+          fontSize: 24,
+          fontWeight: FontWeight.w600,
+          color: textPrimaryLight,
+        ),
+        headlineMedium: GoogleFonts.poppins(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: textPrimaryLight,
+        ),
+        headlineSmall: GoogleFonts.poppins(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: textPrimaryLight,
+        ),
+        titleLarge: GoogleFonts.poppins(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: textPrimaryLight,
+        ),
+        bodyLarge: GoogleFonts.poppins(
+          fontSize: 16,
+          fontWeight: FontWeight.normal,
+          color: textPrimaryLight,
+        ),
+        bodyMedium: GoogleFonts.poppins(
+          fontSize: 14,
+          fontWeight: FontWeight.normal,
+          color: textSecondaryLight,
+        ),
+        labelLarge: GoogleFonts.poppins(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: textPrimaryLight,
+        ),
       ),
       
-      // Card theme
-      cardTheme: CardThemeData( // Changed from CardTheme to CardThemeData
+      // Card Theme
+      cardTheme: CardThemeData(
         elevation: 4,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
+        color: surfaceColor,
+        shadowColor: Colors.black.withValues(alpha:0.1),
       ),
       
-      // Elevated button theme
+      // Elevated Button Theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           elevation: 2,
@@ -107,20 +183,164 @@ class MyApp extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
+          backgroundColor: primaryColor,
+          foregroundColor: Colors.white,
+          textStyle: GoogleFonts.poppins(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       
-      // Bottom navigation bar theme
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      // Icon Button Theme
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          foregroundColor: primaryColor,
+          highlightColor: primaryColor.withValues(alpha:0.1),
+        ),
+      ),
+      
+      // Bottom Navigation Bar Theme
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
         elevation: 8,
-        selectedItemColor: Colors.deepPurple,
-        unselectedItemColor: Colors.grey,
+        selectedItemColor: primaryColor,
+        unselectedItemColor: textSecondaryLight,
         showSelectedLabels: true,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
+        backgroundColor: surfaceColor,
+        selectedLabelStyle: GoogleFonts.poppins(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: GoogleFonts.poppins(
+          fontSize: 12,
+          fontWeight: FontWeight.normal,
+        ),
+      ),
+      
+      // FloatingActionButton Theme
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: secondaryColor,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+      
+      // Drawer Theme
+      drawerTheme: DrawerThemeData(
+        backgroundColor: surfaceColor,
+        elevation: 16,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topRight: Radius.circular(0),
+            bottomRight: Radius.circular(0),
+          ),
+        ),
+      ),
+      
+      // Divider Theme
+      dividerTheme: DividerThemeData(
+        color: textSecondaryLight.withValues(alpha:0.2),
+        thickness: 1,
+        space: 1,
+      ),
+      
+      // Icon Theme
+      iconTheme: IconThemeData(
+        color: primaryColor,
+        size: 24,
+      ),
+      
+      // SnackBar Theme
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: primaryColor,
+        contentTextStyle: GoogleFonts.poppins(
+          color: Colors.white,
+          fontSize: 14,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        behavior: SnackBarBehavior.floating,
       ),
     );
-
-    return baseTheme;
+  }
+  
+  // 🌙 Dark Theme (Optional - for future use)
+  static ThemeData get darkTheme {
+    const Color darkBackground = Color(0xFF121212);
+    const Color darkSurface = Color(0xFF1E1E1E);
+    
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      
+      colorScheme: ColorScheme.dark(
+        primary: accentColor,
+        secondary: secondaryColor,
+        tertiary: primaryColor,
+        surface: darkSurface,
+        error: errorColor,
+        onPrimary: Colors.black,
+        onSecondary: Colors.white,
+        onSurface: textPrimaryDark,
+        onError: Colors.white,
+      ),
+      
+      scaffoldBackgroundColor: darkBackground,
+      
+      appBarTheme: AppBarTheme(
+        elevation: 0,
+        centerTitle: true,
+        backgroundColor: darkSurface,
+        foregroundColor: textPrimaryDark,
+        systemOverlayStyle: SystemUiOverlayStyle.light,
+        titleTextStyle: GoogleFonts.poppins(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: textPrimaryDark,
+          letterSpacing: 0.5,
+        ),
+        iconTheme: const IconThemeData(
+          color: Colors.white,
+          size: 24,
+        ),
+      ),
+      
+      textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
+      
+      cardTheme: CardThemeData(
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        color: darkSurface,
+      ),
+      
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          elevation: 2,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          backgroundColor: accentColor,
+          foregroundColor: Colors.black,
+        ),
+      ),
+      
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        elevation: 8,
+        selectedItemColor: accentColor,
+        unselectedItemColor: textSecondaryDark,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: darkSurface,
+      ),
+    );
   }
 }

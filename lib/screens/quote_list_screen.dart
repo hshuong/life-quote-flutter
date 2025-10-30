@@ -1,5 +1,5 @@
 // lib/screens/quote_list_screen.dart
-// FIXED: Dynamic text color + Correct provider methods
+// UPDATED: Using Theme instead of hard-coded colors
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -39,7 +39,6 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         final provider = context.read<QuoteProvider>();
-        // ✅ FIX: Dùng đúng tên method
         provider.loadQuotesForCategory(widget.category.id!);
         _loadBannerAd();
       }
@@ -58,7 +57,7 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
     final size = await AdsService().getAdaptiveBannerSize(bannerWidth);
 
     if (size == null) {
-      print('Unable to get adaptive banner size');
+      //print('Unable to get adaptive banner size');
       return;
     }
 
@@ -80,18 +79,19 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context); // ✅ Get theme
+    
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: theme.scaffoldBackgroundColor, // ✅ Use theme
       appBar: AppBar(
         title: Text(
           widget.category.name,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
+          style: theme.appBarTheme.titleTextStyle?.copyWith(
             fontSize: Responsive.fontSize(context, 22),
           ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: theme.appBarTheme.backgroundColor, // ✅ Use theme
         elevation: 0,
       ),
       body: Column(
@@ -112,7 +112,6 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
                       return _buildErrorState(provider);
                     }
 
-                    // ✅ FIX: Dùng đúng getter
                     final quotes = provider.getQuotesForCategory(widget.category.id!);
 
                     if (quotes.isEmpty) {
@@ -137,7 +136,7 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
                 color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha:0.1),
                     blurRadius: 4,
                     offset: const Offset(0, -2),
                   ),
@@ -173,8 +172,6 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
     final padding = Responsive.padding(context, 16);
     final fontSize = Responsive.fontSize(context, 16);
     final authorSize = Responsive.fontSize(context, 14);
-    
-    // ✅ FIX: Tính màu text động dựa trên độ sáng gradient
     final textColor = ImageManagerEnhanced.getTextColor(quote.id!);
 
     return TweenAnimationBuilder<double>(
@@ -199,7 +196,6 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
             ),
           );
           
-          // ✅ FIX: Refresh favorite status - dùng đúng method
           if (mounted) {
             final provider = context.read<QuoteProvider>();
             provider.loadQuotesForCategory(widget.category.id!);
@@ -220,7 +216,7 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: colors[0].withOpacity(0.3),
+                color: colors[0].withValues(alpha:0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -234,7 +230,7 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
                 Text(
                   quote.text,
                   style: TextStyle(
-                    color: textColor, // ✅ FIXED: Dùng màu động
+                    color: textColor,
                     fontSize: fontSize,
                     fontWeight: FontWeight.w500,
                     height: 1.4,
@@ -246,22 +242,25 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
-                      child: Text(
-                        '- ${quote.author}',
-                        style: TextStyle(
-                          color: textColor.withOpacity(0.9), // ✅ FIXED
-                          fontSize: authorSize,
-                          fontStyle: FontStyle.italic,
+                    if (quote.author != null && quote.author!.isNotEmpty)
+                      Expanded(
+                        child: Text(
+                          '- ${quote.author}',
+                          style: TextStyle(
+                            color: textColor..withValues(alpha:0.9),
+                            fontSize: authorSize,
+                            fontStyle: FontStyle.italic,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
+                      )
+                    else
+                      const Spacer(),
                     if (quote.isFavorite)
                       Icon(
                         Icons.favorite,
-                        color: textColor, // ✅ FIXED
+                        color: textColor,
                         size: Responsive.fontSize(context, 20),
                       ),
                   ],
@@ -300,6 +299,8 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
   }
 
   Widget _buildErrorState(QuoteProvider provider) {
+    final theme = Theme.of(context); // ✅ Use theme
+    
     return Center(
       child: Padding(
         padding: EdgeInsets.all(Responsive.padding(context, 32)),
@@ -309,29 +310,24 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
             Icon(
               Icons.error_outline,
               size: Responsive.fontSize(context, 64),
-              color: Colors.red,
+              color: theme.colorScheme.error, // ✅ Use theme
             ),
             SizedBox(height: Responsive.padding(context, 16)),
             Text(
               'Oops! Something went wrong',
-              style: TextStyle(
-                fontSize: Responsive.fontSize(context, 18),
+              style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             SizedBox(height: Responsive.padding(context, 8)),
             Text(
               provider.error!,
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: Responsive.fontSize(context, 14),
-              ),
+              style: theme.textTheme.bodyMedium, // ✅ Use theme
               textAlign: TextAlign.center,
             ),
             SizedBox(height: Responsive.padding(context, 24)),
             ElevatedButton.icon(
               onPressed: () {
-                // ✅ FIX: Dùng đúng method
                 provider.loadQuotesForCategory(widget.category.id!);
               },
               icon: const Icon(Icons.refresh),
@@ -347,6 +343,8 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
   }
 
   Widget _buildEmptyState() {
+    final theme = Theme.of(context); // ✅ Use theme
+    
     return Center(
       child: Padding(
         padding: EdgeInsets.all(Responsive.padding(context, 32)),
@@ -356,24 +354,19 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
             Icon(
               Icons.format_quote,
               size: Responsive.fontSize(context, 80),
-              color: Colors.grey[400],
+              color: theme.textTheme.bodyMedium?.color?.withValues(alpha:0.5), // ✅ Use theme
             ),
             SizedBox(height: Responsive.padding(context, 16)),
             Text(
               'No quotes found',
-              style: TextStyle(
-                fontSize: Responsive.fontSize(context, 18),
+              style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Colors.grey[700],
               ),
             ),
             SizedBox(height: Responsive.padding(context, 8)),
             Text(
               'Try another category',
-              style: TextStyle(
-                fontSize: Responsive.fontSize(context, 14),
-                color: Colors.grey[500],
-              ),
+              style: theme.textTheme.bodyMedium, // ✅ Use theme
             ),
           ],
         ),

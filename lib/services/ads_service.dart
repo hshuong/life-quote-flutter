@@ -34,17 +34,17 @@ class AdsService {
         size: AdSize.banner,
         listener: BannerAdListener(
           onAdLoaded: (Ad ad) {
-            print('✓ Banner ad loaded');
+            //print('✓ Banner ad loaded');
           },
           onAdFailedToLoad: (Ad ad, LoadAdError error) {
-            print('✗ Banner ad failed to load: $error');
+            //print('✗ Banner ad failed to load: $error');
             ad.dispose();
           },
           onAdOpened: (Ad ad) {
-            print('Banner ad opened');
+            //print('Banner ad opened');
           },
           onAdClosed: (Ad ad) {
-            print('Banner ad closed');
+            //print('Banner ad closed');
           },
         ),
       );
@@ -52,7 +52,7 @@ class AdsService {
       await bannerAd.load();
       return bannerAd;
     } catch (e) {
-      print('Error loading banner ad: $e');
+      //print('Error loading banner ad: $e');
       return null;
     }
   }
@@ -66,17 +66,17 @@ class AdsService {
         size: size,  // Use adaptive size
         listener: BannerAdListener(
           onAdLoaded: (Ad ad) {
-            print('✓ Adaptive Banner ad loaded (${size.width}x${size.height})');
+            //print('✓ Adaptive Banner ad loaded (${size.width}x${size.height})');
           },
           onAdFailedToLoad: (Ad ad, LoadAdError error) {
-            print('✗ Adaptive Banner ad failed to load: $error');
+            //print('✗ Adaptive Banner ad failed to load: $error');
             ad.dispose();
           },
           onAdOpened: (Ad ad) {
-            print('Adaptive Banner ad opened');
+            //print('Adaptive Banner ad opened');
           },
           onAdClosed: (Ad ad) {
-            print('Adaptive Banner ad closed');
+            //print('Adaptive Banner ad closed');
           },
         ),
       );
@@ -84,7 +84,7 @@ class AdsService {
       await bannerAd.load();
       return bannerAd;
     } catch (e) {
-      print('Error loading adaptive banner ad: $e');
+      //print('Error loading adaptive banner ad: $e');
       return null;
     }
   }
@@ -97,14 +97,14 @@ class AdsService {
       );
       
       if (size == null) {
-        print('Unable to get adaptive banner size');
+        //print('Unable to get adaptive banner size');
         return null;
       }
       
-      print('Adaptive banner size: ${size.width}x${size.height}');
+      //print('Adaptive banner size: ${size.width}x${size.height}');
       return size;
     } catch (e) {
-      print('Error getting adaptive banner size: $e');
+      //print('Error getting adaptive banner size: $e');
       return null;
     }
   }
@@ -118,11 +118,11 @@ class AdsService {
       request: const AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (InterstitialAd ad) {
-          print('✓ Interstitial ad loaded');
+          //print('✓ Interstitial ad loaded');
           completer.complete(ad);
         },
         onAdFailedToLoad: (LoadAdError error) {
-          print('✗ Interstitial ad failed to load: $error');
+          //print('✗ Interstitial ad failed to load: $error');
           completer.complete(null);
         },
       ),
@@ -139,17 +139,17 @@ class AdsService {
         request: const AdRequest(),
         listener: NativeAdListener(
           onAdLoaded: (Ad ad) {
-            print('✓ Native ad loaded');
+            //print('✓ Native ad loaded');
           },
           onAdFailedToLoad: (Ad ad, LoadAdError error) {
-            print('✗ Native ad failed to load: $error');
+            //print('✗ Native ad failed to load: $error');
             ad.dispose();
           },
           onAdOpened: (Ad ad) {
-            print('Native ad opened');
+            //print('Native ad opened');
           },
           onAdClosed: (Ad ad) {
-            print('Native ad closed');
+            //print('Native ad closed');
           },
         ),
         nativeAdOptions: NativeAdOptions(
@@ -160,7 +160,7 @@ class AdsService {
       await nativeAd.load();
       return nativeAd;
     } catch (e) {
-      print('Error loading native ad: $e');
+      //print('Error loading native ad: $e');
       return null;
     }
   }
