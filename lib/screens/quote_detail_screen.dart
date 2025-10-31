@@ -327,35 +327,35 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
                       ),
                       
                       SizedBox(height: Responsive.padding(context, 32)),
-                      
-                      TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.0, end: 1.0),
-                        duration: const Duration(milliseconds: 700),
-                        curve: Curves.easeOut,
-                        builder: (context, value, child) {
-                          return Opacity(opacity: value, child: child);
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: Responsive.padding(context, 20),
-                            vertical: Responsive.padding(context, 10),
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            '- ${quote.author}',
-                            style: TextStyle(
-                              color: textColor,
-                              fontSize: Responsive.fontSize(context, 18),
-                              fontStyle: FontStyle.italic,
-                              fontWeight: FontWeight.w500,
+                      if (quote.author != null && quote.author!.isNotEmpty)
+                        TweenAnimationBuilder<double>(
+                          tween: Tween(begin: 0.0, end: 1.0),
+                          duration: const Duration(milliseconds: 700),
+                          curve: Curves.easeOut,
+                          builder: (context, value, child) {
+                            return Opacity(opacity: value, child: child);
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: Responsive.padding(context, 20),
+                              vertical: Responsive.padding(context, 10),
                             ),
-                            textAlign: TextAlign.center,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              '- ${quote.author}',
+                              style: TextStyle(
+                                color: textColor,
+                                fontSize: Responsive.fontSize(context, 18),
+                                fontStyle: FontStyle.italic,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),

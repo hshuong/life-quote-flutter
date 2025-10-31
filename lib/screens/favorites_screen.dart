@@ -60,7 +60,7 @@ class FavoritesScreen extends StatelessWidget {
           itemBuilder: (context, index) {
             final quote = favorites[index];
             final colors = ImageManagerEnhanced.getGradientForQuote(quote.id!);
-            final padding = Responsive.padding(context, 16);
+            final padding = Responsive.padding(context, 20);
             final fontSize = Responsive.fontSize(context, 16);
             final authorSize = Responsive.fontSize(context, 14);
             final iconSize = Responsive.fontSize(context, 24);
@@ -115,39 +115,44 @@ class FavoritesScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                quote.text,
-                                style: TextStyle(
-                                  color: textColor,
-                                  fontSize: fontSize,
-                                  fontWeight: FontWeight.w500,
-                                  height: 1.4,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            SizedBox(width: Responsive.padding(context, 8)),
-                            Icon(
-                              Icons.favorite,
-                              color: textColor,
-                              size: iconSize,
-                            ),
-                          ],
+                        Text(
+                          quote.text,
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: fontSize,
+                            fontWeight: FontWeight.w500,
+                            height: 1.4,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         SizedBox(height: Responsive.padding(context, 8)),
-                        Text(
-                          '- ${quote.author}',
-                          style: TextStyle(
-                            color: textColor.withValues(alpha: 0.9),
-                            fontSize: authorSize,
-                            fontStyle: FontStyle.italic,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            if (quote.author != null &&
+                                quote.author!.isNotEmpty)
+                              Expanded(
+                                child: Text(
+                                  '- ${quote.author}',
+                                  style: TextStyle(
+                                    color: textColor..withValues(alpha: 0.9),
+                                    fontSize: authorSize,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              )
+                            else
+                              const Spacer(),
+                            if (quote.isFavorite)
+                              Icon(
+                                Icons.favorite,
+                                color: textColor,
+                                size: iconSize,
+                              ),
+                          ],
                         ),
                       ],
                     ),

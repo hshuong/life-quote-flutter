@@ -169,7 +169,7 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
 
   Widget _buildQuoteCard(Quote quote, int index, List<Quote> quotes) {
     final colors = ImageManagerEnhanced.getGradientForQuote(quote.id!);
-    final padding = Responsive.padding(context, 16);
+    final padding = Responsive.padding(context, 20);
     final fontSize = Responsive.fontSize(context, 16);
     final authorSize = Responsive.fontSize(context, 14);
     final textColor = ImageManagerEnhanced.getTextColor(quote.id!);

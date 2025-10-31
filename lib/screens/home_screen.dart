@@ -766,7 +766,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   }
 
   Widget _buildPagerCardWithImage(Quote quote, int index) {
-    final padding = Responsive.padding(context, 20);
+    final padding = Responsive.padding(context, 28);
     const textColor = Colors.white;
     
     final imageList = [
@@ -957,6 +957,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                       
                       Row(
                         children: [
+                          if (quote.author != null && quote.author!.isNotEmpty)
                           Expanded(
                             child: Text(
                               '- ${quote.author}',
@@ -976,7 +977,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                          ),
+                          )
+                          else
+                            const Spacer(),
                           if (quote.isFavorite)
                             Container(
                               padding: EdgeInsets.all(Responsive.padding(context, 6)),
