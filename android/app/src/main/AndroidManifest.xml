@@ -4,7 +4,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
-        android:label="life_quote_app"
+        android:label="Life Quote"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         x`

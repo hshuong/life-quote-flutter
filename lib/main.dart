@@ -4,7 +4,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'providers/quote_provider.dart';
 import 'screens/home_screen.dart';
 
@@ -104,7 +103,8 @@ class AppTheme {
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
         systemOverlayStyle: SystemUiOverlayStyle.light,
-        titleTextStyle: GoogleFonts.poppins(
+        titleTextStyle: TextStyle(
+		      fontFamily: 'Poppins',
           fontSize: 24,
           fontWeight: FontWeight.bold,
           color: Colors.white,
@@ -117,48 +117,57 @@ class AppTheme {
       ),
       
       // Text Theme
-      textTheme: GoogleFonts.poppinsTextTheme().copyWith(
-        displayLarge: GoogleFonts.poppins(
+      textTheme: TextTheme(
+        displayLarge: TextStyle(
+		      fontFamily: 'Poppins',
           fontSize: 32,
           fontWeight: FontWeight.bold,
           color: textPrimaryLight,
         ),
-        displayMedium: GoogleFonts.poppins(
+        displayMedium: TextStyle(
+		      fontFamily: 'Poppins',
           fontSize: 28,
           fontWeight: FontWeight.bold,
           color: textPrimaryLight,
         ),
-        displaySmall: GoogleFonts.poppins(
+        displaySmall: TextStyle(
+          fontFamily: 'Poppins',
           fontSize: 24,
           fontWeight: FontWeight.w600,
           color: textPrimaryLight,
         ),
-        headlineMedium: GoogleFonts.poppins(
+        headlineMedium: TextStyle(
+		      fontFamily: 'Poppins',
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: textPrimaryLight,
         ),
-        headlineSmall: GoogleFonts.poppins(
+        headlineSmall: TextStyle(
+          fontFamily: 'Poppins',
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: textPrimaryLight,
         ),
-        titleLarge: GoogleFonts.poppins(
+        titleLarge: TextStyle(
+          fontFamily: 'Poppins',
           fontSize: 16,
           fontWeight: FontWeight.w500,
           color: textPrimaryLight,
         ),
-        bodyLarge: GoogleFonts.poppins(
+        bodyLarge: TextStyle(
+          fontFamily: 'Poppins',
           fontSize: 16,
           fontWeight: FontWeight.normal,
           color: textPrimaryLight,
         ),
-        bodyMedium: GoogleFonts.poppins(
+        bodyMedium: TextStyle(
+          fontFamily: 'Poppins',
           fontSize: 14,
           fontWeight: FontWeight.normal,
           color: textSecondaryLight,
         ),
-        labelLarge: GoogleFonts.poppins(
+        labelLarge: TextStyle(
+          fontFamily: 'Poppins',
           fontSize: 14,
           fontWeight: FontWeight.w500,
           color: textPrimaryLight,
@@ -185,7 +194,8 @@ class AppTheme {
           ),
           backgroundColor: primaryColor,
           foregroundColor: Colors.white,
-          textStyle: GoogleFonts.poppins(
+          textStyle: TextStyle(
+		        fontFamily: 'Poppins',
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -209,11 +219,13 @@ class AppTheme {
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
         backgroundColor: surfaceColor,
-        selectedLabelStyle: GoogleFonts.poppins(
+        selectedLabelStyle: TextStyle(
+          fontFamily: 'Poppins',
           fontSize: 12,
           fontWeight: FontWeight.w600,
         ),
-        unselectedLabelStyle: GoogleFonts.poppins(
+        unselectedLabelStyle: TextStyle(
+          fontFamily: 'Poppins',
           fontSize: 12,
           fontWeight: FontWeight.normal,
         ),
@@ -257,7 +269,8 @@ class AppTheme {
       // SnackBar Theme
       snackBarTheme: SnackBarThemeData(
         backgroundColor: primaryColor,
-        contentTextStyle: GoogleFonts.poppins(
+        contentTextStyle: TextStyle(
+          fontFamily: 'Poppins',
           color: Colors.white,
           fontSize: 14,
         ),
@@ -298,7 +311,8 @@ class AppTheme {
         backgroundColor: darkSurface,
         foregroundColor: textPrimaryDark,
         systemOverlayStyle: SystemUiOverlayStyle.light,
-        titleTextStyle: GoogleFonts.poppins(
+        titleTextStyle: TextStyle(
+          fontFamily: 'Poppins',
           fontSize: 24,
           fontWeight: FontWeight.bold,
           color: textPrimaryDark,
@@ -310,7 +324,10 @@ class AppTheme {
         ),
       ),
       
-      textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
+      //textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
+      textTheme: ThemeData.dark().textTheme.apply(
+        fontFamily: 'Poppins',
+      ),
       
       cardTheme: CardThemeData(
         elevation: 4,

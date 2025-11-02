@@ -1,6 +1,7 @@
 // lib/services/ads_service.dart
 
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'dart:async';
 
 class AdsService {
@@ -34,17 +35,17 @@ class AdsService {
         size: AdSize.banner,
         listener: BannerAdListener(
           onAdLoaded: (Ad ad) {
-            //print('✓ Banner ad loaded');
+            debugPrint('✓ Banner ad loaded');
           },
           onAdFailedToLoad: (Ad ad, LoadAdError error) {
-            //print('✗ Banner ad failed to load: $error');
+            debugPrint('✗ Banner ad failed to load: $error');
             ad.dispose();
           },
           onAdOpened: (Ad ad) {
-            //print('Banner ad opened');
+            debugPrint('Banner ad opened');
           },
           onAdClosed: (Ad ad) {
-            //print('Banner ad closed');
+            debugPrint('Banner ad closed');
           },
         ),
       );
@@ -52,7 +53,7 @@ class AdsService {
       await bannerAd.load();
       return bannerAd;
     } catch (e) {
-      //print('Error loading banner ad: $e');
+      debugPrint('Error loading banner ad: $e');
       return null;
     }
   }
@@ -66,17 +67,17 @@ class AdsService {
         size: size,  // Use adaptive size
         listener: BannerAdListener(
           onAdLoaded: (Ad ad) {
-            //print('✓ Adaptive Banner ad loaded (${size.width}x${size.height})');
+            debugPrint('✓ Adaptive Banner ad loaded (${size.width}x${size.height})');
           },
           onAdFailedToLoad: (Ad ad, LoadAdError error) {
-            //print('✗ Adaptive Banner ad failed to load: $error');
+            debugPrint('✗ Adaptive Banner ad failed to load: $error');
             ad.dispose();
           },
           onAdOpened: (Ad ad) {
-            //print('Adaptive Banner ad opened');
+            debugPrint('Adaptive Banner ad opened');
           },
           onAdClosed: (Ad ad) {
-            //print('Adaptive Banner ad closed');
+            debugPrint('Adaptive Banner ad closed');
           },
         ),
       );
@@ -84,7 +85,7 @@ class AdsService {
       await bannerAd.load();
       return bannerAd;
     } catch (e) {
-      //print('Error loading adaptive banner ad: $e');
+      debugPrint('Error loading adaptive banner ad: $e');
       return null;
     }
   }
@@ -97,14 +98,14 @@ class AdsService {
       );
       
       if (size == null) {
-        //print('Unable to get adaptive banner size');
+        debugPrint('Unable to get adaptive banner size');
         return null;
       }
-      
-      //print('Adaptive banner size: ${size.width}x${size.height}');
+
+      debugPrint('Adaptive banner size: ${size.width}x${size.height}');
       return size;
     } catch (e) {
-      //print('Error getting adaptive banner size: $e');
+      debugPrint('Error getting adaptive banner size: $e');
       return null;
     }
   }
@@ -118,11 +119,11 @@ class AdsService {
       request: const AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (InterstitialAd ad) {
-          //print('✓ Interstitial ad loaded');
+          debugPrint('✓ Interstitial ad loaded');
           completer.complete(ad);
         },
         onAdFailedToLoad: (LoadAdError error) {
-          //print('✗ Interstitial ad failed to load: $error');
+          debugPrint('✗ Interstitial ad failed to load: $error');
           completer.complete(null);
         },
       ),
@@ -139,17 +140,17 @@ class AdsService {
         request: const AdRequest(),
         listener: NativeAdListener(
           onAdLoaded: (Ad ad) {
-            //print('✓ Native ad loaded');
+            debugPrint('✓ Native ad loaded');
           },
           onAdFailedToLoad: (Ad ad, LoadAdError error) {
-            //print('✗ Native ad failed to load: $error');
+            debugPrint('✗ Native ad failed to load: $error');
             ad.dispose();
           },
           onAdOpened: (Ad ad) {
-            //print('Native ad opened');
+            debugPrint('Native ad opened');
           },
           onAdClosed: (Ad ad) {
-            //print('Native ad closed');
+            debugPrint('Native ad closed');
           },
         ),
         nativeAdOptions: NativeAdOptions(
@@ -160,7 +161,7 @@ class AdsService {
       await nativeAd.load();
       return nativeAd;
     } catch (e) {
-      //print('Error loading native ad: $e');
+      debugPrint('Error loading native ad: $e');
       return null;
     }
   }

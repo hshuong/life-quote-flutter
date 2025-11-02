@@ -3,9 +3,6 @@
 import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-// Thay đổi từ:
-//import 'package:flutter/foundation.dart';
-// Thành:
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter/services.dart';
 import '../models/category.dart';

@@ -1,4 +1,4 @@
-package com.example.life_quote_app
+package com.hoangangiang.life_quote_english
 
 import io.flutter.embedding.android.FlutterActivity
 

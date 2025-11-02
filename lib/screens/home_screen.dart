@@ -217,7 +217,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
         title: _isSearching ? _buildSearchField() : _buildTitle(),
         centerTitle: true,
         backgroundColor: theme.appBarTheme.backgroundColor, // ✅ Use theme
-        elevation: 0,
+        elevation: 0, 
         actions: [
           IconButton(
             icon: Icon(_isSearching ? Icons.close : Icons.search),
@@ -252,31 +252,31 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             ),
           ),
           
-          if (_isHomeBannerAdLoaded && _homeBannerAd != null)
-            Container(
-              margin: EdgeInsets.only(
-                top: Responsive.padding(context, 4),
-                bottom: Responsive.padding(context, 4),
-              ),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
-              ),
-              child: SafeArea(
-                top: false,
-                child: SizedBox(
-                  width: _homeBannerAd!.size.width.toDouble(),
-                  height: _homeBannerAd!.size.height.toDouble(),
-                  child: AdWidget(ad: _homeBannerAd!),
-                ),
-              ),
-            ),
+          // if (_isHomeBannerAdLoaded && _homeBannerAd != null)
+          //   Container(
+          //     margin: EdgeInsets.only(
+          //       top: Responsive.padding(context, 4),
+          //       bottom: Responsive.padding(context, 4),
+          //     ),
+          //     decoration: BoxDecoration(
+          //       color: Colors.white,
+          //       boxShadow: [
+          //         BoxShadow(
+          //           color: Colors.black.withValues(alpha: 0.1),
+          //           blurRadius: 4,
+          //           offset: const Offset(0, -2),
+          //         ),
+          //       ],
+          //     ),
+          //     child: SafeArea(
+          //       top: false,
+          //       child: SizedBox(
+          //         width: _homeBannerAd!.size.width.toDouble(),
+          //         height: _homeBannerAd!.size.height.toDouble(),
+          //         child: AdWidget(ad: _homeBannerAd!),
+          //       ),
+          //     ),
+          //   ),
         ],
       ),
       bottomNavigationBar: showBottomNav
@@ -506,18 +506,21 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
-                      child: Text(
-                        '- ${quote.author}',
-                        style: TextStyle(
-                          color: textColor.withValues(alpha: 0.9), 
-                          fontSize: authorSize,
-                          fontStyle: FontStyle.italic,
+                    if (quote.author != null && quote.author!.isNotEmpty)
+                      Expanded(
+                        child: Text(
+                          '- ${quote.author}',
+                          style: TextStyle(
+                            color: textColor..withValues(alpha:0.9),
+                            fontSize: authorSize,
+                            fontStyle: FontStyle.italic,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
+                      )
+                    else
+                      const Spacer(),
                     if (quote.isFavorite)
                       Icon(
                         Icons.favorite,
@@ -1256,20 +1259,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                       children: [
                         Text(
                           category.name.toUpperCase(),
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: Responsive.fontSize(context, 18),
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black.withValues(alpha: 0.5),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          maxLines: 2,
+                          style: Responsive.categoryCardTitleStyle(context),
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         
