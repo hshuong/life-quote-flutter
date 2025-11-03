@@ -1,5 +1,5 @@
 // lib/screens/quote_list_screen.dart
-// UPDATED: Using Theme instead of hard-coded colors
+// ✅ FULLY UPDATED with Material Design 3 Color Roles
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -57,7 +57,6 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
     final size = await AdsService().getAdaptiveBannerSize(bannerWidth);
 
     if (size == null) {
-      //print('Unable to get adaptive banner size');
       return;
     }
 
@@ -79,21 +78,24 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context); // ✅ Get theme
+    final colorScheme = Theme.of(context).colorScheme; // ✅ Get color scheme
     
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor, // ✅ Use theme
+      // ✅ Use surface color
+      backgroundColor: colorScheme.surface,
+      
       appBar: AppBar(
         title: Text(
           widget.category.name,
-          style: theme.appBarTheme.titleTextStyle?.copyWith(
+          style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
             fontSize: Responsive.fontSize(context, 22),
           ),
         ),
         centerTitle: true,
-        backgroundColor: theme.appBarTheme.backgroundColor, // ✅ Use theme
+        // AppBar already uses surface from theme
         elevation: 0,
       ),
+      
       body: Column(
         children: [
           Expanded(
@@ -133,10 +135,12 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
                 bottom: Responsive.padding(context, 4),
               ),
               decoration: BoxDecoration(
-                color: Colors.white,
+                // ✅ Use surface color
+                color: colorScheme.surface,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha:0.1),
+                    // ✅ Use shadow from theme
+                    color: colorScheme.shadow.withValues(alpha:0.1),
                     blurRadius: 4,
                     offset: const Offset(0, -2),
                   ),
@@ -168,6 +172,7 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
   }
 
   Widget _buildQuoteCard(Quote quote, int index, List<Quote> quotes) {
+    // Keep existing gradient logic for visual appeal
     final colors = ImageManagerEnhanced.getGradientForQuote(quote.id!);
     final padding = Responsive.padding(context, 20);
     final fontSize = Responsive.fontSize(context, 16);
@@ -247,7 +252,7 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
                         child: Text(
                           '- ${quote.author}',
                           style: TextStyle(
-                            color: textColor..withValues(alpha:0.9),
+                            color: textColor.withValues(alpha:0.9),
                             fontSize: authorSize,
                             fontStyle: FontStyle.italic,
                           ),
@@ -274,6 +279,7 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
   }
 
   Widget _buildLoadingState() {
+    final colorScheme = Theme.of(context).colorScheme;
     final padding = Responsive.padding(context, 16);
 
     return ListView.builder(
@@ -283,12 +289,13 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
         return Container(
           margin: EdgeInsets.only(bottom: padding),
           child: Shimmer.fromColors(
-            baseColor: Colors.grey[300]!,
-            highlightColor: Colors.grey[100]!,
+            // ✅ Use surface variants for shimmer
+            baseColor: colorScheme.surfaceContainerHighest,
+            highlightColor: colorScheme.surfaceContainerLow,
             child: Container(
               height: Responsive.quoteCardMinHeight(context),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: colorScheme.surfaceContainer,
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
@@ -299,7 +306,8 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
   }
 
   Widget _buildErrorState(QuoteProvider provider) {
-    final theme = Theme.of(context); // ✅ Use theme
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     
     return Center(
       child: Padding(
@@ -310,19 +318,20 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
             Icon(
               Icons.error_outline,
               size: Responsive.fontSize(context, 64),
-              color: theme.colorScheme.error, // ✅ Use theme
+              // ✅ Use error color
+              color: colorScheme.error,
             ),
             SizedBox(height: Responsive.padding(context, 16)),
             Text(
               'Oops! Something went wrong',
-              style: theme.textTheme.headlineSmall?.copyWith(
+              style: textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             SizedBox(height: Responsive.padding(context, 8)),
             Text(
               provider.error!,
-              style: theme.textTheme.bodyMedium, // ✅ Use theme
+              style: textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
             SizedBox(height: Responsive.padding(context, 24)),
@@ -343,7 +352,8 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
   }
 
   Widget _buildEmptyState() {
-    final theme = Theme.of(context); // ✅ Use theme
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     
     return Center(
       child: Padding(
@@ -354,19 +364,20 @@ class _QuoteListScreenState extends State<QuoteListScreen> {
             Icon(
               Icons.format_quote,
               size: Responsive.fontSize(context, 80),
-              color: theme.textTheme.bodyMedium?.color?.withValues(alpha:0.5), // ✅ Use theme
+              // ✅ Use onSurfaceVariant for secondary icons
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
             SizedBox(height: Responsive.padding(context, 16)),
             Text(
               'No quotes found',
-              style: theme.textTheme.headlineSmall?.copyWith(
+              style: textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             SizedBox(height: Responsive.padding(context, 8)),
             Text(
               'Try another category',
-              style: theme.textTheme.bodyMedium, // ✅ Use theme
+              style: textTheme.bodyMedium,
             ),
           ],
         ),

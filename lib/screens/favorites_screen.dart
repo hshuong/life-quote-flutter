@@ -1,5 +1,5 @@
 // lib/screens/favorites_screen.dart
-// UPDATED: Using Theme instead of hard-coded colors
+// ✅ FULLY UPDATED with Material Design 3 Color Roles
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -13,7 +13,8 @@ class FavoritesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context); // ✅ Get theme
+    final colorScheme = Theme.of(context).colorScheme; // ✅ Get color scheme
+    final textTheme = Theme.of(context).textTheme; // ✅ Get text theme
     
     return Consumer<QuoteProvider>(
       builder: (context, provider, child) {
@@ -30,21 +31,26 @@ class FavoritesScreen extends StatelessWidget {
                   Icon(
                     Icons.favorite_border,
                     size: Responsive.fontSize(context, 100),
-                    color: theme.textTheme.bodyMedium?.color?.withValues(alpha:0.3), // ✅ Use theme
+                    // ✅ Use onSurfaceVariant for empty state icon
+                    color: colorScheme.onSurfaceVariant.withValues(alpha:0.3),
                   ),
                   SizedBox(height: Responsive.padding(context, 24)),
                   Text(
                     'No Favorite Quotes Yet',
-                    style: theme.textTheme.headlineMedium?.copyWith(
+                    // ✅ Use text theme
+                    style: textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                   SizedBox(height: Responsive.padding(context, 12)),
                   Text(
                     'Start adding quotes to your favorites\nby tapping the heart icon ❤️',
                     textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium?.copyWith(
+                    // ✅ Use text theme with onSurfaceVariant
+                    style: textTheme.bodyMedium?.copyWith(
                       height: 1.5,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -59,6 +65,7 @@ class FavoritesScreen extends StatelessWidget {
           itemCount: favorites.length,
           itemBuilder: (context, index) {
             final quote = favorites[index];
+            // Keep gradient colors for visual appeal (like home_screen)
             final colors = ImageManagerEnhanced.getGradientForQuote(quote.id!);
             final padding = Responsive.padding(context, 20);
             final fontSize = Responsive.fontSize(context, 16);
@@ -136,7 +143,7 @@ class FavoritesScreen extends StatelessWidget {
                                 child: Text(
                                   '- ${quote.author}',
                                   style: TextStyle(
-                                    color: textColor..withValues(alpha: 0.9),
+                                    color: textColor.withValues(alpha: 0.9),
                                     fontSize: authorSize,
                                     fontStyle: FontStyle.italic,
                                   ),

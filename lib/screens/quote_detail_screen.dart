@@ -1,5 +1,5 @@
 // lib/screens/quote_detail_screen.dart
-// UPDATED: Using Theme for SnackBar colors
+// ✅ FULLY UPDATED with Material Design 3 Color Roles
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -74,7 +74,6 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
     _quoteViewCount++;
 
     if (_quoteViewCount >= 5 && _isInterstitialAdLoaded && _interstitialAd != null) {
-      //print('🎯 Showing interstitial ad (quote view count: $_quoteViewCount)');
       AdsService().showInterstitialAd(_interstitialAd);
       _quoteViewCount = 0;
       _isInterstitialAdLoaded = false;
@@ -91,7 +90,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
   }
 
   Future<void> _toggleFavorite() async {
-    final theme = Theme.of(context); // ✅ Get theme
+    final colorScheme = Theme.of(context).colorScheme; // ✅ Get color scheme
     final quote = quotes[currentIndex];
     final provider = context.read<QuoteProvider>();
     
@@ -111,7 +110,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
             children: [
               Icon(
                 newStatus ? Icons.favorite : Icons.favorite_border,
-                color: Colors.white,
+                color: colorScheme.onInverseSurface, // ✅ Use theme color
               ),
               const SizedBox(width: 8),
               Text(newStatus ? 'Added to favorites' : 'Removed from favorites'),
@@ -120,8 +119,8 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
           duration: const Duration(seconds: 1),
           behavior: SnackBarBehavior.floating,
           backgroundColor: newStatus 
-              ? Colors.red 
-              : theme.colorScheme.surface.withValues(alpha:0.9), // ✅ Use theme
+              ? colorScheme.error // ✅ Use error color for favorite (red)
+              : colorScheme.inverseSurface, // ✅ Use theme
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
@@ -129,7 +128,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
   }
 
   Future<void> _copyQuote() async {
-    final theme = Theme.of(context); // ✅ Get theme
+    final colorScheme = Theme.of(context).colorScheme; // ✅ Get color scheme
     final quote = quotes[currentIndex];
     final textToCopy = '${quote.text}\n\n- ${quote.author}';
     
@@ -140,15 +139,15 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
-            children: const [
-              Icon(Icons.check_circle, color: Colors.white),
-              SizedBox(width: 8),
-              Text('Quote copied to clipboard!'),
+            children: [
+              Icon(Icons.check_circle, color: colorScheme.onInverseSurface), // ✅ Use theme
+              const SizedBox(width: 8),
+              const Text('Quote copied to clipboard!'),
             ],
           ),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: theme.colorScheme.secondary, // ✅ Use theme
+          backgroundColor: colorScheme.inverseSurface, // ✅ Use theme
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
@@ -156,6 +155,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
   }
 
   Future<void> _shareQuote() async {
+    final colorScheme = Theme.of(context).colorScheme; // ✅ Get color scheme
     final quote = quotes[currentIndex];
     final textToShare =
         '${quote.text}\n\n- ${quote.author}\n\n📱 Shared from Life Quotes App';
@@ -165,11 +165,10 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
       await SharePlus.instance.share(ShareParams(text: textToShare));
     } catch (e) {
       if (mounted) {
-        final theme = Theme.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Failed to share quote'),
-            backgroundColor: theme.colorScheme.error, // ✅ Use theme
+            backgroundColor: colorScheme.error, // ✅ Use theme
           ),
         );
       }
@@ -180,6 +179,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
+      // ✅ Scaffold background already set in theme
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -256,6 +256,7 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
   }
 
   Widget _buildQuotePage(Quote quote) {
+    // Keep visual elements (gradients, decorations) for appeal - like home_screen
     final decoration = ImageManagerEnhanced.getBackgroundDecoration(quote.id!);
     final textColor = ImageManagerEnhanced.getTextColor(quote.id!);
     final screenSize = MediaQuery.of(context).size;
@@ -368,6 +369,8 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
   }
 
   Widget _buildActionButtons(Quote quote) {
+    final colorScheme = Theme.of(context).colorScheme; // ✅ Get color scheme
+    
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -393,7 +396,8 @@ class _QuoteDetailScreenState extends State<QuoteDetailScreen>
           _buildActionButton(
             icon: quote.isFavorite ? Icons.favorite : Icons.favorite_border,
             label: quote.isFavorite ? 'Saved' : 'Save',
-            color: quote.isFavorite ? Colors.red : Colors.white,
+            // ✅ Use error color for favorite heart (maintains red color)
+            color: quote.isFavorite ? colorScheme.error : Colors.white,
             onPressed: _toggleFavorite,
             scale: quote.isFavorite ? 1.1 : 1.0,
           ),

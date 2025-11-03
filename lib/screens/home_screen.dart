@@ -1,5 +1,5 @@
 // lib/screens/home_screen.dart
-// UPDATED: Using Theme instead of hard-coded colors
+// ✅ FULLY UPDATED with Material Design 3 Color Roles
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -115,7 +115,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     final size = await AdsService().getAdaptiveBannerSize(bannerWidth);
     
     if (size == null) {
-      //print('Unable to get adaptive banner size');
       return;
     }
     
@@ -208,16 +207,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context); // ✅ Get theme
+    final colorScheme = Theme.of(context).colorScheme; // ✅ Get color scheme
     final showBottomNav = Responsive.showBottomNav(context);
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor, // ✅ Use theme
+      // ✅ Use surface color
+      backgroundColor: colorScheme.surface,
+      
       appBar: AppBar(
         title: _isSearching ? _buildSearchField() : _buildTitle(),
         centerTitle: true,
-        backgroundColor: theme.appBarTheme.backgroundColor, // ✅ Use theme
-        elevation: 0, 
+        // AppBar already uses surface from theme, no need to override
+        elevation: 0,
         actions: [
           IconButton(
             icon: Icon(_isSearching ? Icons.close : Icons.search),
@@ -235,6 +236,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
           ),
         ],
       ),
+      
       body: Column(
         children: [
           Expanded(
@@ -251,39 +253,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
               ),
             ),
           ),
-          
-          // if (_isHomeBannerAdLoaded && _homeBannerAd != null)
-          //   Container(
-          //     margin: EdgeInsets.only(
-          //       top: Responsive.padding(context, 4),
-          //       bottom: Responsive.padding(context, 4),
-          //     ),
-          //     decoration: BoxDecoration(
-          //       color: Colors.white,
-          //       boxShadow: [
-          //         BoxShadow(
-          //           color: Colors.black.withValues(alpha: 0.1),
-          //           blurRadius: 4,
-          //           offset: const Offset(0, -2),
-          //         ),
-          //       ],
-          //     ),
-          //     child: SafeArea(
-          //       top: false,
-          //       child: SizedBox(
-          //         width: _homeBannerAd!.size.width.toDouble(),
-          //         height: _homeBannerAd!.size.height.toDouble(),
-          //         child: AdWidget(ad: _homeBannerAd!),
-          //       ),
-          //     ),
-          //   ),
         ],
       ),
+      
       bottomNavigationBar: showBottomNav
           ? BottomNavigationBar(
               currentIndex: _selectedIndex,
               onTap: (index) => setState(() => _selectedIndex = index),
-              selectedItemColor: theme.colorScheme.primary, // ✅ Use theme
+              // ✅ Colors already set in theme
               items: const [
                 BottomNavigationBarItem(
                   icon: Icon(Icons.category),
@@ -296,6 +273,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
               ],
             )
           : null,
+      
       drawer: !showBottomNav ? _buildDrawer() : null,
     );
   }
@@ -303,22 +281,26 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   Widget _buildTitle() {
     return Text(
       _selectedIndex == 0 ? 'Life Quotes' : 'Favorites',
-      style: Theme.of(context).appBarTheme.titleTextStyle, // ✅ Use theme
+      // Title style already set in theme
     );
   }
 
   Widget _buildSearchField() {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return TextField(
       controller: _searchController,
       autofocus: true,
       style: TextStyle(
-        color: Colors.white,
+        // ✅ Use onSurface for text on AppBar
+        color: colorScheme.onSurface,
         fontSize: Responsive.fontSize(context, 16),
       ),
       decoration: InputDecoration(
         hintText: 'Search quotes...',
         hintStyle: TextStyle(
-          color: Colors.white70,
+          // ✅ Use onSurfaceVariant for hint text
+          color: colorScheme.onSurfaceVariant.withValues(alpha:0.7),
           fontSize: Responsive.fontSize(context, 16),
         ),
         border: InputBorder.none,
@@ -334,12 +316,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   }
   
   Widget _buildSearchResults() {
-    final theme = Theme.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     
     if (_isSearchLoading) {
       return Center(
         child: CircularProgressIndicator(
-          color: theme.colorScheme.primary, // ✅ Use theme
+          color: colorScheme.primary, // ✅ Use primary
         ),
       );
     }
@@ -352,17 +335,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             Icon(
               Icons.search,
               size: Responsive.fontSize(context, 80),
-              color: theme.textTheme.bodyMedium?.color?.withValues(alpha:0.5), // ✅ Use theme
+              // ✅ Use onSurfaceVariant for secondary icons
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
             SizedBox(height: Responsive.padding(context, 16)),
             Text(
               'Search for quotes',
-              style: theme.textTheme.headlineSmall, // ✅ Use theme
+              style: textTheme.headlineSmall, // ✅ Use text theme
             ),
             SizedBox(height: Responsive.padding(context, 8)),
             Text(
               'Enter keywords to find quotes',
-              style: theme.textTheme.bodyMedium, // ✅ Use theme
+              style: textTheme.bodyMedium, // ✅ Use text theme
             ),
           ],
         ),
@@ -377,19 +361,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             Icon(
               Icons.search_off,
               size: Responsive.fontSize(context, 80),
-              color: theme.textTheme.bodyMedium?.color?.withValues(alpha:0.5),
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
             SizedBox(height: Responsive.padding(context, 16)),
             Text(
               'No results found',
-              style: theme.textTheme.headlineSmall?.copyWith(
+              style: textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             SizedBox(height: Responsive.padding(context, 8)),
             Text(
               'Try different keywords',
-              style: theme.textTheme.bodyMedium,
+              style: textTheme.bodyMedium,
             ),
           ],
         ),
@@ -398,21 +382,22 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
 
     return Column(
       children: [
+        // ✅ Search result header with surface variant
         Container(
           padding: EdgeInsets.all(Responsive.padding(context, 16)),
-          color: theme.colorScheme.primary.withValues(alpha: 0.1), // ✅ Use theme
+          color: colorScheme.surfaceContainerHighest,
           child: Row(
             children: [
               Icon(
                 Icons.search,
                 size: Responsive.fontSize(context, 20),
-                color: theme.colorScheme.primary,
+                color: colorScheme.primary, // ✅ Primary for active icon
               ),
               SizedBox(width: Responsive.padding(context, 8)),
               Text(
                 'Found ${_searchResults.length} quote${_searchResults.length > 1 ? 's' : ''}',
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: theme.colorScheme.primary,
+                style: textTheme.labelLarge?.copyWith(
+                  color: colorScheme.onSurface,
                 ),
               ),
             ],
@@ -436,6 +421,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   }
 
   Widget _buildQuoteCard(Quote quote, int index, List<Quote> quotes) {
+    // Keep existing gradient logic for visual appeal
     final colors = ImageManagerEnhanced.getGradientForQuote(quote.id!);
     final padding = Responsive.padding(context, 16);
     final fontSize = Responsive.fontSize(context, 16);
@@ -511,7 +497,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                         child: Text(
                           '- ${quote.author}',
                           style: TextStyle(
-                            color: textColor..withValues(alpha:0.9),
+                            color: textColor.withValues(alpha:0.9),
                             fontSize: authorSize,
                             fontStyle: FontStyle.italic,
                           ),
@@ -538,15 +524,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   }
 
   Widget _buildDrawer() {
-    final theme = Theme.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     
     return Drawer(
+      // Drawer theme already applied from main theme
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
           DrawerHeader(
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary, // ✅ Use theme
+              // ✅ Use primary for drawer header
+              color: colorScheme.primary,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -554,16 +543,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
               children: [
                 Text(
                   'Life Quotes',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    color: theme.colorScheme.onPrimary,
+                  style: textTheme.headlineMedium?.copyWith(
+                    // ✅ Use onPrimary for text on primary background
+                    color: colorScheme.onPrimary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Inspire your day',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onPrimary.withValues(alpha: 0.8),
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onPrimary.withValues(alpha: 0.8),
                   ),
                 ),
               ],
@@ -701,16 +691,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   }
 
   Widget _buildPagerLoadingState() {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
+      // ✅ Use surface variants for shimmer
+      baseColor: colorScheme.surfaceContainerHighest,
+      highlightColor: colorScheme.surfaceContainerLow,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey[400]!.withValues(alpha: 0.4),
+              color: colorScheme.shadow.withValues(alpha:0.1),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -721,6 +714,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   }
 
   Widget _buildPagerEmptyState() {
+    final textTheme = Theme.of(context).textTheme;
+    // Keep gradient for visual appeal
     final colors = [const Color(0xFF667eea), const Color(0xFF764ba2)];
     
     return Container(
@@ -743,9 +738,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
       child: Center(
         child: Text(
           'No quotes available',
-          style: TextStyle(
+          style: textTheme.titleMedium?.copyWith(
             color: Colors.white,
-            fontSize: Responsive.fontSize(context, 16),
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -770,6 +764,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
 
   Widget _buildPagerCardWithImage(Quote quote, int index) {
     final padding = Responsive.padding(context, 28);
+    final colorScheme = Theme.of(context).colorScheme;
     const textColor = Colors.white;
     
     final imageList = [
@@ -877,7 +872,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.3),
+                // ✅ Use shadow color from theme
+                color: colorScheme.shadow.withValues(alpha: 0.3),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
@@ -987,12 +983,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                             Container(
                               padding: EdgeInsets.all(Responsive.padding(context, 6)),
                               decoration: BoxDecoration(
-                                color: Colors.red.withValues(alpha: 0.9),
+                                // ✅ Use error color for favorite heart
+                                color: colorScheme.error.withValues(alpha: 0.9),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
                                 Icons.favorite,
-                                color: Colors.white,
+                                color: colorScheme.onError,
                                 size: Responsive.fontSize(context, 16),
                               ),
                             ),
@@ -1010,7 +1007,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   }
 
   Widget _buildPageIndicators() {
-    final theme = Theme.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
     final poolPosition = _currentQuotePage % _quotesPoolSize;
     
     return Row(
@@ -1026,9 +1023,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             width: isActive ? 24.0 : 8.0,
             height: 8.0,
             decoration: BoxDecoration(
+              // ✅ Use primary for active indicator
               color: isActive 
-                  ? theme.colorScheme.primary // ✅ Use theme
-                  : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.3),
+                  ? colorScheme.primary
+                  : colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(4),
             ),
           );
@@ -1038,7 +1036,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   }
 
   Widget _buildErrorState(QuoteProvider provider) {
-    final theme = Theme.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     
     return Center(
       child: Padding(
@@ -1049,19 +1048,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             Icon(
               Icons.error_outline,
               size: Responsive.fontSize(context, 64),
-              color: theme.colorScheme.error, // ✅ Use theme
+              // ✅ Use error color
+              color: colorScheme.error,
             ),
             SizedBox(height: Responsive.padding(context, 16)),
             Text(
               'Oops! Something went wrong',
-              style: theme.textTheme.headlineSmall?.copyWith(
+              style: textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             SizedBox(height: Responsive.padding(context, 8)),
             Text(
               provider.error!,
-              style: theme.textTheme.bodyMedium,
+              style: textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
             SizedBox(height: Responsive.padding(context, 24)),
@@ -1084,6 +1084,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   }
 
   Widget _buildLoadingState() {
+    final colorScheme = Theme.of(context).colorScheme;
     final spacing = Responsive.gridSpacing(context);
     final columns = Responsive.gridColumns(context);
     final padding = Responsive.padding(context, 16);
@@ -1098,11 +1099,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
               vertical: spacing,
             ),
             child: Shimmer.fromColors(
-              baseColor: Colors.grey[300]!,
-              highlightColor: Colors.grey[100]!,
+              // ✅ Use surface variants for shimmer
+              baseColor: colorScheme.surfaceContainerHighest,
+              highlightColor: colorScheme.surfaceContainerLow,
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: colorScheme.surfaceContainer,
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
@@ -1126,11 +1128,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             ),
             delegate: SliverChildBuilderDelegate((context, index) {
               return Shimmer.fromColors(
-                baseColor: Colors.grey[300]!,
-                highlightColor: Colors.grey[100]!,
+                baseColor: colorScheme.surfaceContainerHighest,
+                highlightColor: colorScheme.surfaceContainerLow,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: colorScheme.surfaceContainer,
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
@@ -1143,7 +1145,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   }
 
   Widget _buildEmptyState() {
-    final theme = Theme.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     
     return Center(
       child: Column(
@@ -1152,12 +1155,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
           Icon(
             Icons.category_outlined,
             size: Responsive.fontSize(context, 80),
-            color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5),
+            // ✅ Use onSurfaceVariant for empty state icons
+            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
           ),
           SizedBox(height: Responsive.padding(context, 16)),
           Text(
             'No categories available',
-            style: theme.textTheme.headlineSmall,
+            style: textTheme.headlineSmall,
           ),
           SizedBox(height: Responsive.padding(context, 16)),
           ElevatedButton.icon(
@@ -1174,6 +1178,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   }
   
   Widget _buildCategoryCard(Category category) {
+    final colorScheme = Theme.of(context).colorScheme;
     final imagePath = CategoryImageManager.getImagePath(category.name);
     final fallbackColors = CategoryImageManager.getFallbackGradient(category.name);
 
@@ -1199,7 +1204,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
+                  // ✅ Use shadow from theme
+                  color: colorScheme.shadow.withValues(alpha: 0.2),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
