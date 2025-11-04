@@ -1,5 +1,5 @@
 // lib/screens/home_screen.dart
-// ✅ FULLY UPDATED with Material Design 3 Color Roles
+// ✅ FULLY UPDATED with Search Pagination (Load More)
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -30,6 +30,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   final TextEditingController _searchController = TextEditingController();
   List<Quote> _searchResults = [];
   bool _isSearchLoading = false;
+  
+  // ✅ NEW: Pagination variables
+  int _searchOffset = 0;
+  final int _searchLimit = 50; // ✅ FIXED: Made final since it never changes
+  int _totalSearchResults = 0;
+  bool _isLoadingMore = false;
+  bool _hasMoreResults = true;
 
   late AnimationController _gradientAnimationController;
   
@@ -183,41 +190,80 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     }
   }
 
+  /// ✅ UPDATED: Perform search with pagination reset
   Future<void> _performSearch(String query) async {
     if (query.isEmpty) {
       setState(() {
         _searchResults = [];
         _isSearchLoading = false;
+        _searchOffset = 0;
+        _totalSearchResults = 0;
+        _hasMoreResults = true;
       });
       return;
     }
 
-    setState(() => _isSearchLoading = true);
+    setState(() {
+      _isSearchLoading = true;
+      _searchOffset = 0; // Reset offset for new search
+      _searchResults = []; // Clear previous results
+    });
 
     final provider = context.read<QuoteProvider>();
-    final results = await provider.searchQuotes(query);
+    
+    // Get total count
+    final totalCount = await provider.getSearchResultsCount(query);
+    
+    // Get first batch of results
+    final results = await provider.searchQuotes(query, offset: 0, limit: _searchLimit);
 
     if (mounted) {
       setState(() {
         _searchResults = results;
+        _totalSearchResults = totalCount;
+        _searchOffset = results.length;
+        _hasMoreResults = results.length < totalCount;
         _isSearchLoading = false;
+      });
+    }
+  }
+
+  /// ✅ NEW: Load more search results
+  Future<void> _loadMoreSearchResults() async {
+    if (_isLoadingMore || !_hasMoreResults) return;
+
+    setState(() => _isLoadingMore = true);
+
+    final provider = context.read<QuoteProvider>();
+    final query = _searchController.text;
+    
+    final moreResults = await provider.searchQuotes(
+      query, 
+      offset: _searchOffset, 
+      limit: _searchLimit,
+    );
+
+    if (mounted) {
+      setState(() {
+        _searchResults.addAll(moreResults);
+        _searchOffset += moreResults.length;
+        _hasMoreResults = _searchResults.length < _totalSearchResults;
+        _isLoadingMore = false;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme; // ✅ Get color scheme
+    final colorScheme = Theme.of(context).colorScheme;
     final showBottomNav = Responsive.showBottomNav(context);
 
     return Scaffold(
-      // ✅ Use surface color
       backgroundColor: colorScheme.surface,
       
       appBar: AppBar(
         title: _isSearching ? _buildSearchField() : _buildTitle(),
         centerTitle: true,
-        // AppBar already uses surface from theme, no need to override
         elevation: 0,
         actions: [
           IconButton(
@@ -228,6 +274,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                 if (!_isSearching) {
                   _searchController.clear();
                   _searchResults = [];
+                  _searchOffset = 0;
+                  _totalSearchResults = 0;
+                  _hasMoreResults = true;
                 }
               });
             },
@@ -260,7 +309,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
           ? BottomNavigationBar(
               currentIndex: _selectedIndex,
               onTap: (index) => setState(() => _selectedIndex = index),
-              // ✅ Colors already set in theme
               items: const [
                 BottomNavigationBarItem(
                   icon: Icon(Icons.category),
@@ -281,7 +329,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   Widget _buildTitle() {
     return Text(
       _selectedIndex == 0 ? 'Life Quotes' : 'Favorites',
-      // Title style already set in theme
     );
   }
 
@@ -292,14 +339,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
       controller: _searchController,
       autofocus: true,
       style: TextStyle(
-        // ✅ Use onSurface for text on AppBar
         color: colorScheme.onSurface,
         fontSize: Responsive.fontSize(context, 16),
       ),
       decoration: InputDecoration(
         hintText: 'Search quotes...',
         hintStyle: TextStyle(
-          // ✅ Use onSurfaceVariant for hint text
           color: colorScheme.onSurfaceVariant.withValues(alpha:0.7),
           fontSize: Responsive.fontSize(context, 16),
         ),
@@ -315,6 +360,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     );
   }
   
+  /// ✅ UPDATED: Build search results with Load More button
   Widget _buildSearchResults() {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -322,7 +368,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     if (_isSearchLoading) {
       return Center(
         child: CircularProgressIndicator(
-          color: colorScheme.primary, // ✅ Use primary
+          color: colorScheme.primary,
         ),
       );
     }
@@ -335,25 +381,24 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             Icon(
               Icons.search,
               size: Responsive.fontSize(context, 80),
-              // ✅ Use onSurfaceVariant for secondary icons
               color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
             SizedBox(height: Responsive.padding(context, 16)),
             Text(
               'Search for quotes',
-              style: textTheme.headlineSmall, // ✅ Use text theme
+              style: textTheme.headlineSmall,
             ),
             SizedBox(height: Responsive.padding(context, 8)),
             Text(
               'Enter keywords to find quotes',
-              style: textTheme.bodyMedium, // ✅ Use text theme
+              style: textTheme.bodyMedium,
             ),
           ],
         ),
       );
     }
 
-    if (_searchResults.isEmpty) {
+    if (_searchResults.isEmpty && !_isSearchLoading) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -382,7 +427,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
 
     return Column(
       children: [
-        // ✅ Search result header with surface variant
+        // Search result header
         Container(
           padding: EdgeInsets.all(Responsive.padding(context, 16)),
           color: colorScheme.surfaceContainerHighest,
@@ -391,11 +436,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
               Icon(
                 Icons.search,
                 size: Responsive.fontSize(context, 20),
-                color: colorScheme.primary, // ✅ Primary for active icon
+                color: colorScheme.primary,
               ),
               SizedBox(width: Responsive.padding(context, 8)),
               Text(
-                'Found ${_searchResults.length} quote${_searchResults.length > 1 ? 's' : ''}',
+                'Found $_totalSearchResults quote${_totalSearchResults > 1 ? 's' : ''} • Showing ${_searchResults.length}',
                 style: textTheme.labelLarge?.copyWith(
                   color: colorScheme.onSurface,
                 ),
@@ -403,11 +448,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             ],
           ),
         ),
+        
         Expanded(
           child: ListView.builder(
             padding: EdgeInsets.all(Responsive.padding(context, 16)),
-            itemCount: _searchResults.length,
+            itemCount: _searchResults.length + (_hasMoreResults ? 1 : 0),
             itemBuilder: (context, index) {
+              // Show Load More button at the end
+              if (index == _searchResults.length) {
+                return _buildLoadMoreButton();
+              }
+              
               return _buildQuoteCard(
                 _searchResults[index],
                 index,
@@ -420,8 +471,48 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     );
   }
 
+  /// ✅ NEW: Build Load More button
+  Widget _buildLoadMoreButton() {
+    final colorScheme = Theme.of(context).colorScheme;
+    // ✅ FIXED: Removed unused textTheme variable
+    
+    return Container(
+      margin: EdgeInsets.only(
+        top: Responsive.padding(context, 8),
+        bottom: Responsive.padding(context, 16),
+      ),
+      child: _isLoadingMore
+          ? Center(
+              child: Padding(
+                padding: EdgeInsets.all(Responsive.padding(context, 16)),
+                child: CircularProgressIndicator(
+                  color: colorScheme.primary,
+                ),
+              ),
+            )
+          : ElevatedButton.icon(
+              onPressed: _loadMoreSearchResults,
+              icon: const Icon(Icons.expand_more),
+              label: Text(
+                'Load More (${_totalSearchResults - _searchResults.length} remaining)',
+                style: TextStyle(
+                  fontSize: Responsive.fontSize(context, 14),
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(
+                  double.infinity,
+                  Responsive.padding(context, 48),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+    );
+  }
+
   Widget _buildQuoteCard(Quote quote, int index, List<Quote> quotes) {
-    // Keep existing gradient logic for visual appeal
     final colors = ImageManagerEnhanced.getGradientForQuote(quote.id!);
     final padding = Responsive.padding(context, 16);
     final fontSize = Responsive.fontSize(context, 16);
@@ -528,13 +619,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     final textTheme = Theme.of(context).textTheme;
     
     return Drawer(
-      // Drawer theme already applied from main theme
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
           DrawerHeader(
             decoration: BoxDecoration(
-              // ✅ Use primary for drawer header
               color: colorScheme.primary,
             ),
             child: Column(
@@ -544,7 +633,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                 Text(
                   'Life Quotes',
                   style: textTheme.headlineMedium?.copyWith(
-                    // ✅ Use onPrimary for text on primary background
                     color: colorScheme.onPrimary,
                     fontWeight: FontWeight.bold,
                   ),
@@ -694,7 +782,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     final colorScheme = Theme.of(context).colorScheme;
     
     return Shimmer.fromColors(
-      // ✅ Use surface variants for shimmer
       baseColor: colorScheme.surfaceContainerHighest,
       highlightColor: colorScheme.surfaceContainerLow,
       child: Container(
@@ -715,7 +802,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
 
   Widget _buildPagerEmptyState() {
     final textTheme = Theme.of(context).textTheme;
-    // Keep gradient for visual appeal
     final colors = [const Color(0xFF667eea), const Color(0xFF764ba2)];
     
     return Container(
@@ -872,7 +958,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                // ✅ Use shadow color from theme
                 color: colorScheme.shadow.withValues(alpha: 0.3),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
@@ -983,7 +1068,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                             Container(
                               padding: EdgeInsets.all(Responsive.padding(context, 6)),
                               decoration: BoxDecoration(
-                                // ✅ Use error color for favorite heart
                                 color: colorScheme.error.withValues(alpha: 0.9),
                                 shape: BoxShape.circle,
                               ),
@@ -1023,7 +1107,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             width: isActive ? 24.0 : 8.0,
             height: 8.0,
             decoration: BoxDecoration(
-              // ✅ Use primary for active indicator
               color: isActive 
                   ? colorScheme.primary
                   : colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
@@ -1048,7 +1131,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             Icon(
               Icons.error_outline,
               size: Responsive.fontSize(context, 64),
-              // ✅ Use error color
               color: colorScheme.error,
             ),
             SizedBox(height: Responsive.padding(context, 16)),
@@ -1099,7 +1181,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
               vertical: spacing,
             ),
             child: Shimmer.fromColors(
-              // ✅ Use surface variants for shimmer
               baseColor: colorScheme.surfaceContainerHighest,
               highlightColor: colorScheme.surfaceContainerLow,
               child: Container(
@@ -1155,7 +1236,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
           Icon(
             Icons.category_outlined,
             size: Responsive.fontSize(context, 80),
-            // ✅ Use onSurfaceVariant for empty state icons
             color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
           ),
           SizedBox(height: Responsive.padding(context, 16)),
@@ -1204,7 +1284,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  // ✅ Use shadow from theme
                   color: colorScheme.shadow.withValues(alpha: 0.2),
                   blurRadius: 8,
                   offset: const Offset(0, 4),

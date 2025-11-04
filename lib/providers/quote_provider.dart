@@ -1,6 +1,5 @@
 // lib/providers/quote_provider.dart
 
-//import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import '../models/category.dart' as app_models;
 import '../models/quote.dart';
@@ -34,7 +33,7 @@ class QuoteProvider with ChangeNotifier {
     return _quotesByCategory[categoryId] ?? [];
   }
 
-/// Load tất cả categories từ database
+  /// Load tất cả categories từ database
   /// Chỉ load 1 lần, các lần sau dùng cache
   Future<void> loadCategories() async {
     // Nếu đã load rồi thì không load lại
@@ -116,7 +115,7 @@ class QuoteProvider with ChangeNotifier {
       
       // Update database
       await DatabaseHelper.instance.toggleFavorite(quote.id!, newStatus);
-      debugPrint('💝 Provider: Toggled favorite for quote ${quote.id}');
+      debugPrint('👍 Provider: Toggled favorite for quote ${quote.id}');
 
       // Update cache trong _quotesByCategory
       if (_quotesByCategory.containsKey(quote.categoryId)) {
@@ -190,12 +189,24 @@ class QuoteProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Tìm kiếm quotes
-  Future<List<Quote>> searchQuotes(String query) async {
+  /// ✅ NEW: Get total search results count
+  Future<int> getSearchResultsCount(String query) async {
+    if (query.isEmpty) return 0;
+    
+    try {
+      return await DatabaseHelper.instance.getSearchResultsCount(query);
+    } catch (e) {
+      debugPrint('❌ Provider: Failed to count search results: $e');
+      return 0;
+    }
+  }
+
+  /// ✅ UPDATED: Search quotes with pagination
+  Future<List<Quote>> searchQuotes(String query, {int offset = 0, int limit = 50}) async {
     if (query.isEmpty) return [];
     
     try {
-      return await DatabaseHelper.instance.searchQuotes(query);
+      return await DatabaseHelper.instance.searchQuotes(query, offset: offset, limit: limit);
     } catch (e) {
       debugPrint('❌ Provider: Search failed: $e');
       return [];

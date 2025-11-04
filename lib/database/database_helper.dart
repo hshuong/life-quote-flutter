@@ -137,7 +137,6 @@ class DatabaseHelper {
         whereArgs: [categoryId],
         orderBy: 'id ASC',
       );
-      //debugPrint('📖 Raw data: $result'); // In dữ liệu để debug
       debugPrint('📖 Loaded ${result.length} quotes for category $categoryId');
       return result.map((json) => Quote.fromMap(json)).toList();
     } catch (e) {
@@ -201,7 +200,7 @@ class DatabaseHelper {
         where: 'id = ?',
         whereArgs: [quoteId],
       );
-      debugPrint('💝 Toggled favorite for quote $quoteId: $isFavorite');
+      debugPrint('👍 Toggled favorite for quote $quoteId: $isFavorite');
     } catch (e) {
       debugPrint('❌ Error toggling favorite: $e');
       rethrow;
@@ -235,7 +234,27 @@ class DatabaseHelper {
     }
   }
 
-  Future<List<Quote>> searchQuotes(String query) async {
+  /// ✅ NEW: Get total count of search results
+  Future<int> getSearchResultsCount(String query) async {
+    try {
+      if (query.isEmpty) return 0;
+
+      final db = await database;
+      final result = await db.rawQuery(
+        'SELECT COUNT(*) as count FROM quotes WHERE text LIKE ? OR author LIKE ?',
+        ['%$query%', '%$query%'],
+      );
+      final count = Sqflite.firstIntValue(result) ?? 0;
+      debugPrint('🔍 Total search results for "$query": $count');
+      return count;
+    } catch (e) {
+      debugPrint('❌ Error counting search results: $e');
+      return 0;
+    }
+  }
+
+  /// ✅ UPDATED: Search quotes with pagination support
+  Future<List<Quote>> searchQuotes(String query, {int offset = 0, int limit = 50}) async {
     try {
       if (query.isEmpty) return [];
 
@@ -245,9 +264,10 @@ class DatabaseHelper {
         where: 'text LIKE ? OR author LIKE ?',
         whereArgs: ['%$query%', '%$query%'],
         orderBy: 'id DESC',
-        limit: 50,
+        limit: limit,
+        offset: offset,
       );
-      debugPrint('🔍 Found ${result.length} quotes matching "$query"');
+      debugPrint('🔍 Found ${result.length} quotes matching "$query" (offset: $offset, limit: $limit)');
       return result.map((json) => Quote.fromMap(json)).toList();
     } catch (e) {
       debugPrint('❌ Error searching quotes: $e');
