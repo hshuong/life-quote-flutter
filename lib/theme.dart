@@ -325,16 +325,16 @@ class AppTheme {
         ),
       ),
       
-      // Bottom Navigation Bar Theme
+      // ✅ Bottom Navigation Bar Theme - UPDATED for Light Theme
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         elevation: 3,
         backgroundColor: lightColorScheme.surfaceContainer,
-        selectedItemColor: lightColorScheme.onSecondaryContainer,
-        unselectedItemColor: lightColorScheme.onSurfaceVariant,
+        selectedItemColor: lightColorScheme.primary, // Màu teal đậm - nổi bật
+        unselectedItemColor: lightColorScheme.onSurfaceVariant.withValues(alpha: 0.6), // Xám mờ
         selectedLabelStyle: const TextStyle(
           fontFamily: 'Poppins',
           fontSize: 12,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600, // Bold hơn cho selected
         ),
         unselectedLabelStyle: const TextStyle(
           fontFamily: 'Poppins',
@@ -530,12 +530,25 @@ class AppTheme {
         ),
       ),
       
+      // ✅ Bottom Navigation Bar Theme - UPDATED for Dark Theme
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         elevation: 3,
         backgroundColor: darkColorScheme.surfaceContainer,
-        selectedItemColor: darkColorScheme.onSecondaryContainer,
-        unselectedItemColor: darkColorScheme.onSurfaceVariant,
+        selectedItemColor: darkColorScheme.primary, // Màu cyan sáng #4FD8EB - rất nổi bật
+        unselectedItemColor: darkColorScheme.onSurfaceVariant.withValues(alpha: 0.5), // Xám mờ hơn
+        selectedLabelStyle: const TextStyle(
+          fontFamily: 'Poppins',
+          fontSize: 12,
+          fontWeight: FontWeight.w600, // Bold hơn
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontFamily: 'Poppins',
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
+        ),
         type: BottomNavigationBarType.fixed,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
       ),
       
       navigationBarTheme: NavigationBarThemeData(

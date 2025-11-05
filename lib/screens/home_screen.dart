@@ -15,6 +15,9 @@ import '../services/ads_service.dart';
 import 'quote_list_screen.dart';
 import 'quote_detail_screen.dart';
 import 'favorites_screen.dart';
+import 'theme_settings_screen.dart';
+import '../widgets/theme_toggle_button.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -266,6 +269,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
         centerTitle: true,
         elevation: 0,
         actions: [
+          // ✅ Theme Toggle Button
+          const ThemeToggleButton(),
+
+          // Search Button
           IconButton(
             icon: Icon(_isSearching ? Icons.close : Icons.search),
             onPressed: () {
@@ -328,7 +335,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
 
   Widget _buildTitle() {
     return Text(
-      _selectedIndex == 0 ? 'Life Quotes' : 'Favorites',
+      _selectedIndex == 0 ? 'Life Quote' : 'Favorites',
     );
   }
 
@@ -615,60 +622,76 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   }
 
   Widget _buildDrawer() {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          DrawerHeader(
-            decoration: BoxDecoration(
-              color: colorScheme.primary,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Text(
-                  'Life Quotes',
-                  style: textTheme.headlineMedium?.copyWith(
-                    color: colorScheme.onPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
+  final colorScheme = Theme.of(context).colorScheme;
+  final textTheme = Theme.of(context).textTheme;
+  
+  return Drawer(
+    child: ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        DrawerHeader(
+          decoration: BoxDecoration(
+            color: colorScheme.primary,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text(
+                'Life Quotes',
+                style: textTheme.headlineMedium?.copyWith(
+                  color: colorScheme.onPrimary,
+                  fontWeight: FontWeight.bold,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Inspire your day',
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onPrimary.withValues(alpha: 0.8),
-                  ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Inspire your day',
+                style: textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onPrimary.withValues(alpha: 0.8),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          ListTile(
-            leading: const Icon(Icons.category),
-            title: const Text('Categories'),
-            selected: _selectedIndex == 0,
-            onTap: () {
-              setState(() => _selectedIndex = 0);
-              Navigator.pop(context);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.favorite),
-            title: const Text('Favorites'),
-            selected: _selectedIndex == 1,
-            onTap: () {
-              setState(() => _selectedIndex = 1);
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+        ListTile(
+          leading: const Icon(Icons.category),
+          title: const Text('Categories'),
+          selected: _selectedIndex == 0,
+          onTap: () {
+            setState(() => _selectedIndex = 0);
+            Navigator.pop(context);
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.favorite),
+          title: const Text('Favorites'),
+          selected: _selectedIndex == 1,
+          onTap: () {
+            setState(() => _selectedIndex = 1);
+            Navigator.pop(context);
+          },
+        ),
+        // ✅ Divider
+        const Divider(),
+        // ✅ Theme Settings
+        ListTile(
+          leading: const Icon(Icons.palette),
+          title: const Text('Theme Settings'),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ThemeSettingsScreen(),
+              ),
+            );
+          },
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildCategoriesView() {
     return Consumer<QuoteProvider>(
@@ -1337,27 +1360,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                   ),
                   
                   Padding(
-                    padding: EdgeInsets.all(Responsive.padding(context, 16)),
+                    padding: EdgeInsets.all(Responsive.padding(context, 24)),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.end,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          category.name.toUpperCase(),
+                          category.name,
                           style: Responsive.categoryCardTitleStyle(context),
-                          maxLines: 1,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                        ),
-                        
-                        SizedBox(height: Responsive.padding(context, 8)),
-                        
-                        Container(
-                          width: 40,
-                          height: 3,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
                         ),
                       ],
                     ),

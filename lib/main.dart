@@ -1,12 +1,13 @@
 // lib/main.dart
-// Updated to use Material Design 3 theme from separate theme.dart file
+// ✅ Updated với ThemeProvider để hỗ trợ đổi theme
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'providers/quote_provider.dart';
+import 'providers/theme_provider.dart'; // ✅ Import ThemeProvider
 import 'screens/home_screen.dart';
-import 'theme.dart'; // ✅ Import theme file
+import 'theme.dart';
 
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'services/ads_service.dart';
@@ -26,16 +27,6 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  // ✅ Set system UI based on theme
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark, // Dark icons for light theme
-      systemNavigationBarColor: Colors.transparent,
-      systemNavigationBarIconBrightness: Brightness.dark,
-    ),
-  );
-
   runApp(const MyApp());
 }
 
@@ -47,19 +38,39 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => QuoteProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()), // ✅ Thêm ThemeProvider
       ],
-      child: MaterialApp(
-        title: 'Life Quotes',
-        debugShowCheckedModeBanner: false,
-        
-        // ✅ Use theme from AppTheme class
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        
-        // ✅ You can change this to ThemeMode.dark or ThemeMode.system
-        themeMode: ThemeMode.light,
-        
-        home: const HomeScreen(),
+      // ✅ Consumer để lắng nghe thay đổi theme
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          // ✅ Cập nhật system UI overlay theo theme hiện tại
+          final brightness = themeProvider.themeMode == ThemeMode.dark
+              ? Brightness.light // Light icons cho dark theme
+              : Brightness.dark; // Dark icons cho light theme
+          
+          SystemChrome.setSystemUIOverlayStyle(
+            SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,
+              statusBarIconBrightness: brightness,
+              systemNavigationBarColor: Colors.transparent,
+              systemNavigationBarIconBrightness: brightness,
+            ),
+          );
+
+          return MaterialApp(
+            title: 'Life Quote',
+            debugShowCheckedModeBanner: false,
+            
+            // ✅ Sử dụng theme từ AppTheme
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            
+            // ✅ Sử dụng themeMode từ ThemeProvider
+            themeMode: themeProvider.themeMode,
+            
+            home: const HomeScreen(),
+          );
+        },
       ),
     );
   }
