@@ -22,6 +22,8 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        // ✅ FIX: Enable core library desugaring
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -45,7 +47,8 @@ android {
         applicationId = "com.hoangangiang.life_quote_english"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        //minSdk = flutter.minSdkVersion
+        minSdk = flutter.minSdkVersion  // ✅ FIX: Set minimum để desugaring hoạt động
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -74,6 +77,10 @@ flutter {
 }
 
 dependencies {
+    // ✅ FIX: Thêm core library desugaring dependency
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    // ✅ MultiDex support
+    implementation("androidx.multidex:multidex:2.0.1")
     // 🎯 FIXED: Kotlin DSL syntax with parentheses
     implementation("com.google.android.gms:play-services-ads:23.0.0")
 }
