@@ -1,18 +1,40 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Add permissions -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    
+    <!-- ========================================== -->
+    <!-- PERMISSIONS -->
+    <!-- ========================================== -->
+    
+    <!-- Network permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    
+    <!-- ✅ Notification permissions -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    
+    <!-- ✅ WorkManager permission -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
         android:label="Life Quote"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
-        x`
-        <!-- Add AdMob App ID meta-data -->
+        
+        <!-- ========================================== -->
+        <!-- ADMOB -->
+        <!-- ========================================== -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-3940256099942544~3347511713" />
 
+        <!-- ========================================== -->
+        <!-- MAIN ACTIVITY -->
+        <!-- ========================================== -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -21,31 +43,130 @@
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
-            android:windowSoftInputMode="adjustResize">
-            <!-- Specifies an Android theme to apply to this Activity as soon as
-                 the Android process has started. This theme is visible to the user
-                 while the Flutter UI initializes. After that, this theme continues
-                 to determine the Window background behind the Flutter UI. -->
+            android:windowSoftInputMode="adjustResize"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true">
+            
             <meta-data
               android:name="io.flutter.embedding.android.NormalTheme"
-              android:resource="@style/NormalTheme"
-              />
+              android:resource="@style/NormalTheme" />
+            
+            <!-- Main launcher intent -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+
+            <!-- ✅ Handle notification tap -->
+            <intent-filter>
+                <action android:name="FLUTTER_NOTIFICATION_CLICK" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
-        <!-- Don't delete the meta-data below.
-             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+
+        <!-- ========================================== -->
+        <!-- FLUTTER LOCAL NOTIFICATIONS RECEIVERS -->
+        <!-- ========================================== -->
+        
+        <!-- ✅ Boot receiver - reschedule notifications after reboot -->
+        <receiver 
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver"
+            android:exported="true"
+            android:enabled="true"
+            tools:replace="android:exported">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
+            </intent-filter>
+        </receiver>
+        
+        <!-- ✅ Notification receiver -->
+        <receiver 
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"
+            android:exported="true"
+            android:enabled="true"
+            tools:replace="android:exported" />
+
+        <!-- ========================================== -->
+        <!-- WORKMANAGER RECEIVERS -->
+        <!-- ========================================== -->
+        
+        <!-- ✅ FIXED: WorkManager boot receiver với tools:replace -->
+        <receiver 
+            android:name="androidx.work.impl.background.systemalarm.RescheduleReceiver"
+            android:enabled="true"
+            android:exported="true"
+            tools:replace="android:enabled,android:exported">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+            </intent-filter>
+        </receiver>
+
+        <!-- ✅ WorkManager constraint proxies -->
+        <receiver 
+            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$BatteryNotLowProxy"
+            android:enabled="false"
+            android:exported="false"
+            tools:replace="android:enabled,android:exported"/>
+        
+        <receiver 
+            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$StorageNotLowProxy"
+            android:enabled="false"
+            android:exported="false"
+            tools:replace="android:enabled,android:exported"/>
+        
+        <receiver 
+            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$NetworkStateProxy"
+            android:enabled="false"
+            android:exported="false"
+            tools:replace="android:enabled,android:exported"/>
+        
+        <receiver 
+            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$BatteryChargingProxy"
+            android:enabled="false"
+            android:exported="false"
+            tools:replace="android:enabled,android:exported"/>
+
+        <!-- ✅ WorkManager system job service -->
+        <service
+            android:name="androidx.work.impl.background.systemjob.SystemJobService"
+            android:directBootAware="false"
+            android:enabled="@bool/enable_system_job_service"
+            android:exported="true"
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            tools:replace="android:enabled,android:exported" />
+
+        <!-- ✅ WorkManager alarm service -->
+        <service
+            android:name="androidx.work.impl.background.systemalarm.SystemAlarmService"
+            android:directBootAware="false"
+            android:enabled="@bool/enable_system_alarm_service"
+            android:exported="false"
+            tools:replace="android:enabled,android:exported" />
+
+        <!-- ✅ WorkManager foreground service -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:directBootAware="false"
+            android:enabled="@bool/enable_system_foreground_service"
+            android:exported="false"
+            android:foregroundServiceType="dataSync"
+            tools:replace="android:foregroundServiceType,android:enabled,android:exported" />
+
+        <!-- ========================================== -->
+        <!-- FLUTTER METADATA -->
+        <!-- ========================================== -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
-    <!-- Required to query activities that can process text, see:
-         https://developer.android.com/training/package-visibility and
-         https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
-
-         In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
+    
+    <!-- ========================================== -->
+    <!-- QUERIES -->
+    <!-- ========================================== -->
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>

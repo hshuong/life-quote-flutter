@@ -17,6 +17,8 @@ import 'quote_detail_screen.dart';
 import 'favorites_screen.dart';
 import 'theme_settings_screen.dart';
 import '../widgets/theme_toggle_button.dart';
+import 'settings_screen.dart'; // ✅ Import settings screen
+
 
 
 class HomeScreen extends StatefulWidget {
@@ -264,13 +266,32 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     return Scaffold(
       backgroundColor: colorScheme.surface,
       
+      // ✅ FIXED: Cập nhật phần AppBar trong home_screen.dart
+      // Thay thế toàn bộ phần AppBar trong build() method
+
       appBar: AppBar(
         title: _isSearching ? _buildSearchField() : _buildTitle(),
         centerTitle: true,
         elevation: 0,
         actions: [
+          // ✅ Settings Button - Hiện trên mọi màn hình
+          if (!_isSearching)
+            IconButton(
+              icon: const Icon(Icons.notifications_active),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const QuoteOfDaySettingsScreen(),
+                  ),
+                );
+              },
+              iconSize: Responsive.fontSize(context, 24),
+              tooltip: 'Quote of the Day',
+            ),
+          
           // ✅ Theme Toggle Button
-          const ThemeToggleButton(),
+          if (!_isSearching) const ThemeToggleButton(),
 
           // Search Button
           IconButton(
@@ -621,77 +642,101 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     );
   }
 
+  // ✅ FINAL: Drawer cho tablet/desktop - giữ Settings ở đây
+  // Thay thế method _buildDrawer() trong home_screen.dart
+
   Widget _buildDrawer() {
-  final colorScheme = Theme.of(context).colorScheme;
-  final textTheme = Theme.of(context).textTheme;
-  
-  return Drawer(
-    child: ListView(
-      padding: EdgeInsets.zero,
-      children: [
-        DrawerHeader(
-          decoration: BoxDecoration(
-            color: colorScheme.primary,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text(
-                'Life Quotes',
-                style: textTheme.headlineMedium?.copyWith(
-                  color: colorScheme.onPrimary,
-                  fontWeight: FontWeight.bold,
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: BoxDecoration(
+              color: colorScheme.primary,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  'Life Quotes',
+                  style: textTheme.headlineMedium?.copyWith(
+                    color: colorScheme.onPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Inspire your day',
-                style: textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onPrimary.withValues(alpha: 0.8),
+                const SizedBox(height: 8),
+                Text(
+                  'Inspire your day',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onPrimary.withValues(alpha: 0.8),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        ListTile(
-          leading: const Icon(Icons.category),
-          title: const Text('Categories'),
-          selected: _selectedIndex == 0,
-          onTap: () {
-            setState(() => _selectedIndex = 0);
-            Navigator.pop(context);
-          },
-        ),
-        ListTile(
-          leading: const Icon(Icons.favorite),
-          title: const Text('Favorites'),
-          selected: _selectedIndex == 1,
-          onTap: () {
-            setState(() => _selectedIndex = 1);
-            Navigator.pop(context);
-          },
-        ),
-        // ✅ Divider
-        const Divider(),
-        // ✅ Theme Settings
-        ListTile(
-          leading: const Icon(Icons.palette),
-          title: const Text('Theme Settings'),
-          onTap: () {
-            Navigator.pop(context);
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ThemeSettingsScreen(),
-              ),
-            );
-          },
-        ),
-      ],
-    ),
-  );
-}
+          
+          // Categories
+          ListTile(
+            leading: const Icon(Icons.category),
+            title: const Text('Categories'),
+            selected: _selectedIndex == 0,
+            onTap: () {
+              setState(() => _selectedIndex = 0);
+              Navigator.pop(context);
+            },
+          ),
+          
+          // Favorites
+          ListTile(
+            leading: const Icon(Icons.favorite),
+            title: const Text('Favorites'),
+            selected: _selectedIndex == 1,
+            onTap: () {
+              setState(() => _selectedIndex = 1);
+              Navigator.pop(context);
+            },
+          ),
+          
+          const Divider(),
+          
+          // ✅ Quote of the Day Settings
+          ListTile(
+            leading: const Icon(Icons.notifications_active),
+            title: const Text('Quote of the Day'),
+            subtitle: const Text('Daily notification'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const QuoteOfDaySettingsScreen(),
+                ),
+              );
+            },
+          ),
+          
+          // Theme Settings
+          ListTile(
+            leading: const Icon(Icons.palette),
+            title: const Text('Theme Settings'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ThemeSettingsScreen(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildCategoriesView() {
     return Consumer<QuoteProvider>(
