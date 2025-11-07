@@ -1,5 +1,5 @@
 // lib/services/notification_service.dart
-// ✅ FIXED: Added exact alarm permission handling for Android 12+
+// ✅ FIXED: Proper timezone handling for notifications
 
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -27,12 +27,19 @@ class NotificationService {
   static const String _hourKey = 'quote_notification_hour';
   static const String _minuteKey = 'quote_notification_minute';
 
-  /// Initialize notification service
+  /// ✅ FIXED: Initialize notification service with proper timezone
   Future<void> initialize() async {
     if (_isInitialized) return;
     
-    // Initialize timezone
+    // ✅ Initialize timezone database
     tz.initializeTimeZones();
+    
+    // ✅ CRITICAL FIX: Set local timezone based on device
+    // This ensures scheduled times match user's expectation
+    final String timeZoneName = await _getLocalTimeZoneName();
+    tz.setLocalLocation(tz.getLocation(timeZoneName));
+    
+    debugPrint('🌍 Timezone set to: $timeZoneName');
     
     // Android initialization settings
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -56,6 +63,176 @@ class NotificationService {
     );
     
     _isInitialized = true;
+    debugPrint('✅ Notification service initialized');
+  }
+
+  /// ✅ GLOBAL: Get device's local timezone name for ALL countries
+  Future<String> _getLocalTimeZoneName() async {
+    try {
+      // Get current DateTime with timezone info
+      final DateTime now = DateTime.now();
+      final Duration offset = now.timeZoneOffset;
+      
+      // Get offset in minutes for precise matching
+      final int offsetMinutes = offset.inMinutes;
+      final int offsetHours = offset.inHours;
+      final int offsetRemainder = offsetMinutes.abs() % 60;
+      
+      debugPrint('🌍 Device timezone offset: ${offset.inHours}h ${offsetRemainder}m (${offsetMinutes}m total)');
+      
+      // Find matching timezone from timezone database
+      // This searches through ALL available timezones
+      final List<String> allLocations = tz.timeZoneDatabase.locations.keys.toList();
+      
+      // Try to find exact match based on current offset
+      for (final locationName in allLocations) {
+        try {
+          final location = tz.getLocation(locationName);
+          final tzNow = tz.TZDateTime.now(location);
+          
+          // Check if offset matches
+          if (tzNow.timeZoneOffset.inMinutes == offsetMinutes) {
+            debugPrint('✅ Matched timezone: $locationName (offset: ${tzNow.timeZoneOffset})');
+            return locationName;
+          }
+        } catch (e) {
+          // Skip invalid locations
+          continue;
+        }
+      }
+      
+      // If no exact match found, use comprehensive fallback mapping
+      debugPrint('⚠️ No exact match, using fallback mapping for offset: $offsetHours:${offsetRemainder.toString().padLeft(2, '0')}');
+      return _getFallbackTimezone(offsetHours, offsetRemainder);
+      
+    } catch (e) {
+      debugPrint('❌ Error getting timezone: $e, using UTC');
+      return 'UTC';
+    }
+  }
+  
+  /// Fallback timezone mapping for all UTC offsets worldwide
+  String _getFallbackTimezone(int hours, int minutes) {
+    // Create offset key (e.g., "+7:0" or "-5:30")
+    final String offsetKey = hours >= 0 
+        ? '+$hours:$minutes' 
+        : '$hours:$minutes';
+    
+    // Comprehensive timezone mapping for all world regions
+    final Map<String, String> timezoneMap = {
+      // UTC-12 to UTC-10 (Pacific)
+      '-12:0': 'Pacific/Wallis',
+      '-11:0': 'Pacific/Midway',
+      '-10:0': 'Pacific/Honolulu',
+      
+      // UTC-9.5 to UTC-9 (Alaska, French Polynesia)
+      '-9:30': 'Pacific/Marquesas',
+      '-9:0': 'America/Anchorage',
+      
+      // UTC-8 (PST - US West Coast)
+      '-8:0': 'America/Los_Angeles',
+      
+      // UTC-7 (MST - US Mountain)
+      '-7:0': 'America/Denver',
+      
+      // UTC-6 (CST - US Central, Mexico)
+      '-6:0': 'America/Chicago',
+      
+      // UTC-5 (EST - US East Coast, Colombia, Peru)
+      '-5:0': 'America/New_York',
+      
+      // UTC-4 (Atlantic, Venezuela, Bolivia)
+      '-4:0': 'America/Halifax',
+      
+      // UTC-3.5 (Newfoundland)
+      '-3:30': 'America/St_Johns',
+      
+      // UTC-3 (Brazil, Argentina)
+      '-3:0': 'America/Sao_Paulo',
+      
+      // UTC-2 (Mid-Atlantic)
+      '-2:0': 'Atlantic/South_Georgia',
+      
+      // UTC-1 (Azores, Cape Verde)
+      '-1:0': 'Atlantic/Azores',
+      
+      // UTC+0 (GMT, UK, Portugal, West Africa)
+      '+0:0': 'Europe/London',
+      
+      // UTC+1 (CET - Central Europe, West Africa)
+      '+1:0': 'Europe/Paris',
+      
+      // UTC+2 (EET - Eastern Europe, Egypt, South Africa)
+      '+2:0': 'Europe/Athens',
+      
+      // UTC+3 (Moscow, East Africa, Saudi Arabia)
+      '+3:0': 'Europe/Moscow',
+      
+      // UTC+3.5 (Iran)
+      '+3:30': 'Asia/Tehran',
+      
+      // UTC+4 (UAE, Caucasus)
+      '+4:0': 'Asia/Dubai',
+      
+      // UTC+4.5 (Afghanistan)
+      '+4:30': 'Asia/Kabul',
+      
+      // UTC+5 (Pakistan, West Asia)
+      '+5:0': 'Asia/Karachi',
+      
+      // UTC+5.5 (India, Sri Lanka)
+      '+5:30': 'Asia/Kolkata',
+      
+      // UTC+5.75 (Nepal)
+      '+5:45': 'Asia/Kathmandu',
+      
+      // UTC+6 (Bangladesh, Bhutan, Kazakhstan)
+      '+6:0': 'Asia/Dhaka',
+      
+      // UTC+6.5 (Myanmar, Cocos Islands)
+      '+6:30': 'Asia/Yangon',
+      
+      // UTC+7 (Thailand, Vietnam, Indonesia West)
+      '+7:0': 'Asia/Bangkok',
+      
+      // UTC+8 (China, Singapore, Malaysia, Philippines, Australia West)
+      '+8:0': 'Asia/Singapore',
+      
+      // UTC+8.75 (Australia Eucla)
+      '+8:45': 'Australia/Eucla',
+      
+      // UTC+9 (Japan, Korea, Indonesia East)
+      '+9:0': 'Asia/Tokyo',
+      
+      // UTC+9.5 (Australia Central)
+      '+9:30': 'Australia/Darwin',
+      
+      // UTC+10 (Australia East, Papua New Guinea)
+      '+10:0': 'Australia/Sydney',
+      
+      // UTC+10.5 (Australia Lord Howe)
+      '+10:30': 'Australia/Lord_Howe',
+      
+      // UTC+11 (Solomon Islands, Vanuatu)
+      '+11:0': 'Pacific/Guadalcanal',
+      
+      // UTC+12 (New Zealand, Fiji)
+      '+12:0': 'Pacific/Auckland',
+      
+      // UTC+12.75 (Chatham Islands)
+      '+12:45': 'Pacific/Chatham',
+      
+      // UTC+13 (Tonga, Samoa)
+      '+13:0': 'Pacific/Tongatapu',
+      
+      // UTC+14 (Kiribati Line Islands)
+      '+14:0': 'Pacific/Kiritimati',
+    };
+    
+    // Return matched timezone or UTC as ultimate fallback
+    final timezone = timezoneMap[offsetKey] ?? 'UTC';
+    debugPrint('📍 Using fallback timezone: $timezone for offset $offsetKey');
+    return timezone;
   }
 
   /// Handle notification tap
@@ -63,7 +240,7 @@ class NotificationService {
     debugPrint('Notification tapped: ${response.payload}');
   }
 
-  /// ✅ NEW: Check if exact alarms are permitted (Android 12+)
+  /// Check if exact alarms are permitted (Android 12+)
   Future<bool> canScheduleExactAlarms() async {
     if (await Permission.scheduleExactAlarm.isGranted) {
       return true;
@@ -71,15 +248,12 @@ class NotificationService {
     return false;
   }
 
-  /// ✅ NEW: Request exact alarm permission (Android 12+)
-  /// This will open system settings where user must enable manually
+  /// Request exact alarm permission (Android 12+)
   Future<bool> requestExactAlarmPermission() async {
-    // Check if already granted
     if (await canScheduleExactAlarms()) {
       return true;
     }
     
-    // Request permission - this opens system settings on Android 12+
     final status = await Permission.scheduleExactAlarm.request();
     
     if (status.isGranted) {
@@ -87,7 +261,6 @@ class NotificationService {
       return true;
     } else if (status.isPermanentlyDenied) {
       debugPrint('❌ Exact alarm permission permanently denied');
-      // Open app settings
       await openAppSettings();
       return false;
     } else {
@@ -106,7 +279,7 @@ class NotificationService {
     return status.isGranted;
   }
 
-  /// ✅ UPDATED: Schedule daily quote notification with exact alarm check
+  /// ✅ FIXED: Schedule daily quote notification with correct timezone
   Future<void> scheduleDailyQuote({
     required int hour,
     required int minute,
@@ -114,14 +287,14 @@ class NotificationService {
   }) async {
     await initialize();
     
-    // ✅ Step 1: Request notification permission
+    // Step 1: Request notification permission
     final hasNotificationPermission = await requestPermission();
     if (!hasNotificationPermission) {
       debugPrint('❌ Notification permission denied');
       throw Exception('Notification permission is required');
     }
     
-    // ✅ Step 2: Check/Request exact alarm permission (Android 12+)
+    // Step 2: Check/Request exact alarm permission (Android 12+)
     final canScheduleExact = await canScheduleExactAlarms();
     if (!canScheduleExact) {
       debugPrint('⚠️ Exact alarm permission not granted, requesting...');
@@ -162,9 +335,11 @@ class NotificationService {
       iOS: iosDetails,
     );
     
-    // Calculate next scheduled time
-    final now = tz.TZDateTime.now(tz.local);
-    var scheduledDate = tz.TZDateTime(
+    // ✅ FIXED: Calculate next scheduled time using LOCAL timezone
+    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+    
+    // Create scheduled date in LOCAL timezone
+    tz.TZDateTime scheduledDate = tz.TZDateTime(
       tz.local,
       now.year,
       now.month,
@@ -176,10 +351,17 @@ class NotificationService {
     // If the scheduled time is in the past, schedule for tomorrow
     if (scheduledDate.isBefore(now)) {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
+      debugPrint('⏭️ Scheduled time is in the past, moving to tomorrow');
     }
     
+    // ✅ Debug logging to verify times
+    debugPrint('📅 Current time: ${now.toString()}');
+    debugPrint('⏰ Scheduled time: ${scheduledDate.toString()}');
+    debugPrint('🌍 Timezone: ${tz.local.name}');
+    debugPrint('🕐 User requested time: $hour:${minute.toString().padLeft(2, '0')}');
+    
     try {
-      // ✅ Schedule the notification with exact timing
+      // Schedule the notification with exact timing
       await _notifications.zonedSchedule(
         quoteOfTheDayId,
         'Quote of the Day 💭',
@@ -188,13 +370,13 @@ class NotificationService {
         notificationDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         matchDateTimeComponents: DateTimeComponents.time, // Repeat daily
-        
       );
       
       // Save settings
       await _saveNotificationSettings(true, hour, minute);
       
-      debugPrint('✅ Quote notification scheduled for $hour:$minute');
+      debugPrint('✅ Quote notification scheduled successfully');
+      debugPrint('   Next notification: ${scheduledDate.toString()}');
     } catch (e) {
       debugPrint('❌ Failed to schedule notification: $e');
       rethrow;
@@ -265,6 +447,8 @@ class NotificationService {
       _truncateQuote(quoteText, 100),
       notificationDetails,
     );
+    
+    debugPrint('✅ Test notification sent');
   }
 
   /// Truncate quote text for notification
@@ -276,7 +460,10 @@ class NotificationService {
   /// Reschedule notification (call this after boot or app update)
   Future<void> rescheduleIfEnabled(QuoteProvider quoteProvider) async {
     final enabled = await isEnabled();
-    if (!enabled) return;
+    if (!enabled) {
+      debugPrint('ℹ️ Notifications not enabled, skipping reschedule');
+      return;
+    }
     
     final time = await getNotificationTime();
     
@@ -286,8 +473,21 @@ class NotificationService {
         minute: time.minute,
         quoteProvider: quoteProvider,
       );
+      debugPrint('✅ Notifications rescheduled successfully');
     } catch (e) {
       debugPrint('⚠️ Failed to reschedule notification: $e');
+    }
+  }
+
+  /// ✅ NEW: Get pending notifications for debugging
+  Future<void> debugPendingNotifications() async {
+    final pendingNotifications = 
+        await _notifications.pendingNotificationRequests();
+    
+    debugPrint('📋 Pending notifications: ${pendingNotifications.length}');
+    for (var notification in pendingNotifications) {
+      debugPrint('   ID: ${notification.id}, Title: ${notification.title}');
+      debugPrint('   Body: ${notification.body}');
     }
   }
 }

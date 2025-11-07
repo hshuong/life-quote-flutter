@@ -222,4 +222,52 @@ class QuoteProvider with ChangeNotifier {
       return null;
     }
   }
+
+  // lib/providers/quote_provider.dart
+// ✅ ADD this method to your existing QuoteProvider class
+
+/// ✅ NEW: Get quote by ID from database
+Future<Quote?> getQuoteById(int quoteId) async {
+  try {
+    final db = await DatabaseHelper.instance.database;
+    
+    final List<Map<String, dynamic>> maps = await db.query(
+      'quotes',
+      where: 'id = ?',
+      whereArgs: [quoteId],
+    );
+    
+    if (maps.isEmpty) {
+      debugPrint('⚠️ Quote with ID $quoteId not found');
+      return null;
+    }
+    
+    // Check if quote is in favorites
+    final favoriteQuote = _favoriteQuotes.firstWhere(
+      (q) => q.id == quoteId,
+      orElse: () => Quote(
+        id: quoteId,
+        text: maps[0]['text'],
+        author: maps[0]['author'],
+        categoryId: maps[0]['category_id'],
+        isFavorite: false,
+      ),
+    );
+    
+    final quote = Quote(
+      id: maps[0]['id'],
+      text: maps[0]['text'],
+      author: maps[0]['author'],
+      categoryId: maps[0]['category_id'],
+      isFavorite: favoriteQuote.isFavorite,
+    );
+    
+    debugPrint('✅ Loaded quote with ID $quoteId');
+    return quote;
+    
+  } catch (e) {
+    debugPrint('❌ Error loading quote by ID: $e');
+    return null;
+  }
+}
 }
