@@ -222,4 +222,67 @@ class QuoteProvider with ChangeNotifier {
       return null;
     }
   }
+
+  // lib/providers/quote_provider.dart
+  // ✅ FIXED: Add categoryId to Quote constructor
+  // Thêm vào cuối class QuoteProvider, trước dấu đóng ngoặc }
+
+  /// ✅ NEW: Get quote by ID from database
+  /// Sử dụng cho notification navigation
+  /// Trả về quote với favorite status chính xác
+  Future<Quote?> getQuoteById(int quoteId) async {
+    try {
+      // Tìm trong cache trước
+      // Check tất cả categories đã load
+      for (final quotes in _quotesByCategory.values) {
+        final cachedQuote = quotes.firstWhere(
+          (q) => q.id == quoteId,
+          orElse: () => Quote(
+            id: -1,
+            text: '',
+            author: '',
+            categoryId: -1, // ✅ FIXED: Add categoryId
+            isFavorite: false,
+          ),
+        );
+        
+        if (cachedQuote.id != -1) {
+          debugPrint('✅ Provider: Found quote $quoteId in cache');
+          return cachedQuote;
+        }
+      }
+      
+      // Check trong favorites
+      final favoriteQuote = _favoriteQuotes.firstWhere(
+        (q) => q.id == quoteId,
+        orElse: () => Quote(
+          id: -1,
+          text: '',
+          author: '',
+          categoryId: -1, // ✅ FIXED: Add categoryId
+          isFavorite: false,
+        ),
+      );
+      
+      if (favoriteQuote.id != -1) {
+        debugPrint('✅ Provider: Found quote $quoteId in favorites');
+        return favoriteQuote;
+      }
+      
+      // Nếu không có trong cache, load từ database
+      final quote = await DatabaseHelper.instance.getQuoteById(quoteId);
+      
+      if (quote != null) {
+        debugPrint('✅ Provider: Loaded quote $quoteId from database');
+        return quote;
+      }
+      
+      debugPrint('⚠️ Provider: Quote $quoteId not found');
+      return null;
+      
+    } catch (e) {
+      debugPrint('❌ Provider: Failed to get quote by ID: $e');
+      return null;
+    }
+  }
 }

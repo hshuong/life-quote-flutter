@@ -1,9 +1,10 @@
 // lib/main.dart
-// ✅ Updated với Background Service và Notification
+// ✅ Updated with Notification Navigation Handling
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // ✅ ADD THIS
 import 'providers/quote_provider.dart';
 import 'providers/theme_provider.dart';
 import 'screens/home_screen.dart';
@@ -12,7 +13,10 @@ import 'theme.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'services/ads_service.dart';
 import 'services/notification_service.dart';
-import 'services/background_service.dart'; // ✅ Import Background Service
+import 'services/background_service.dart';
+
+// ✅ NEW: Global key for navigation
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +27,20 @@ void main() async {
   try {
     await NotificationService().initialize();
     debugPrint('✅ Notification service initialized');
+
+    // ✅ NEW: Check if app was launched by tapping notification
+    final notificationAppLaunchDetails = await FlutterLocalNotificationsPlugin()
+        .getNotificationAppLaunchDetails();
+    
+    if (notificationAppLaunchDetails?.didNotificationLaunchApp ?? false) {
+      final payload = notificationAppLaunchDetails?.notificationResponse?.payload;
+      debugPrint('🚀 App launched from notification with payload: $payload');
+      
+      if (payload != null) {
+        // Store payload to be handled after app builds
+        NotificationService().storeLaunchPayload(payload);
+      }
+    }
   } catch (e) {
     debugPrint('❌ Failed to initialize notification service: $e');
   }
@@ -97,6 +115,8 @@ class MyApp extends StatelessWidget {
           );
 
           return MaterialApp(
+            // ✅ Add navigator key for global navigation
+            navigatorKey: navigatorKey,
             title: 'Life Quote',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,

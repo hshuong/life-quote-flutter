@@ -219,26 +219,31 @@ class _QuoteOfDaySettingsScreenState extends State<QuoteOfDaySettingsScreen> {
   }
 
   Future<void> _testNotification() async {
-    // ✅ Get provider BEFORE async operation
-    final quoteProvider = context.read<QuoteProvider>();
-    final quote = await quoteProvider.getRandomQuote();
+  // ✅ Get provider BEFORE async operation
+  final quoteProvider = context.read<QuoteProvider>();
+  final quote = await quoteProvider.getRandomQuote();
+  
+  if (!mounted) return;
+  
+  if (quote != null) {
+    // ✅ Pass full quote data including ID and author
+    await _notificationService.showTestNotification(
+      quote.text,
+      quoteId: quote.id,
+      author: quote.author,
+    );
     
     if (!mounted) return;
     
-    if (quote != null) {
-      await _notificationService.showTestNotification(quote.text);
-      
-      if (!mounted) return;
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Test notification sent!'),
-          behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('🔔 Test notification sent! Tap it to view the quote.'),
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: 3),
+      ),
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {

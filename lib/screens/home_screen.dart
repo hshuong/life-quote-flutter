@@ -1,6 +1,7 @@
 // lib/screens/home_screen.dart
-// ✅ FULLY UPDATED with Search Pagination (Load More)
+// ✅ FULLY UPDATED with Notification Navigation Handling
 
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
@@ -12,14 +13,13 @@ import '../utils/image_manager_enhanced.dart';
 import '../utils/category_image_manager.dart';
 import '../utils/responsive.dart';
 import '../services/ads_service.dart';
+import '../services/notification_service.dart';
 import 'quote_list_screen.dart';
 import 'quote_detail_screen.dart';
 import 'favorites_screen.dart';
 import 'theme_settings_screen.dart';
 import '../widgets/theme_toggle_button.dart';
-import 'settings_screen.dart'; // ✅ Import settings screen
-
-
+import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -36,9 +36,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   List<Quote> _searchResults = [];
   bool _isSearchLoading = false;
   
-  // ✅ NEW: Pagination variables
   int _searchOffset = 0;
-  final int _searchLimit = 50; // ✅ FIXED: Made final since it never changes
+  final int _searchLimit = 50;
   int _totalSearchResults = 0;
   bool _isLoadingMore = false;
   bool _hasMoreResults = true;
@@ -69,6 +68,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     );
     
     _initializeScreen();
+    
+    // ✅ Check for notification payload after a short delay
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (mounted) {
+        debugPrint('🏠 Ready to check notification payload');
+        _checkNotificationPayload();
+      }
+    });
   }
 
   void _initializeScreen() {
@@ -93,6 +100,83 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
         }
       }
     });
+  }
+
+  /// ✅ Check and handle notification payload
+  Future<void> _checkNotificationPayload() async {
+    final payload = NotificationService().getAndClearLastPayload();
+    
+    if (payload != null && payload.isNotEmpty) {
+      debugPrint('📱 Processing notification payload: $payload');
+      
+      try {
+        // Parse JSON payload
+        final data = jsonDecode(payload);
+        debugPrint('📦 Parsed data: $data');
+        final quoteId = data['quoteId'] as int?;
+        final text = data['text'] as String?;
+        final author = data['author'] as String?;
+
+        debugPrint('🔢 Quote ID: $quoteId');
+        debugPrint('📝 Text: ${text?.substring(0, 50)}...');
+        debugPrint('✍️ Author: $author');
+        
+        if (quoteId != null && text != null) {
+          // Load the quote from database/cache to get accurate data
+          final provider = context.read<QuoteProvider>();
+          final actualQuote = await provider.getQuoteById(quoteId);
+
+          debugPrint('🔍 Found in DB: ${actualQuote != null}');
+          
+          if (mounted && actualQuote != null) {
+            // Navigate to quote detail screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => QuoteDetailScreen(
+                  quotes: [actualQuote],
+                  initialIndex: 0,
+                ),
+              ),
+            );
+            
+            debugPrint('✅ Navigated to quote detail from notification');
+          } else if (mounted) {
+            debugPrint('⚠️ Using fallback quote from notification data');
+            // Fallback: create quote from notification data if not found in DB
+            final fallbackQuote = Quote(
+              id: quoteId,
+              text: text,
+              author: author,
+              categoryId: 0, // Unknown category
+              isFavorite: false,
+            );
+            
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => QuoteDetailScreen(
+                  quotes: [fallbackQuote],
+                  initialIndex: 0,
+                ),
+              ),
+            );
+            
+            debugPrint('⚠️ Used fallback quote from notification');
+          }
+        } else {
+          debugPrint('❌ Missing required data: quoteId=$quoteId, text=$text');
+        }
+
+      } catch (e) {
+        debugPrint('❌ Error processing notification payload: $e');
+        debugPrint('Stack trace: ${StackTrace.current}');
+      }
+    } else {
+      debugPrint('ℹ️ No payload to process');
+    }
+
+    debugPrint('🏠 ======================================');
   }
 
   @override
@@ -195,7 +279,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     }
   }
 
-  /// ✅ UPDATED: Perform search with pagination reset
   Future<void> _performSearch(String query) async {
     if (query.isEmpty) {
       setState(() {
@@ -210,16 +293,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
 
     setState(() {
       _isSearchLoading = true;
-      _searchOffset = 0; // Reset offset for new search
-      _searchResults = []; // Clear previous results
+      _searchOffset = 0;
+      _searchResults = [];
     });
 
     final provider = context.read<QuoteProvider>();
     
-    // Get total count
     final totalCount = await provider.getSearchResultsCount(query);
-    
-    // Get first batch of results
     final results = await provider.searchQuotes(query, offset: 0, limit: _searchLimit);
 
     if (mounted) {
@@ -233,7 +313,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     }
   }
 
-  /// ✅ NEW: Load more search results
   Future<void> _loadMoreSearchResults() async {
     if (_isLoadingMore || !_hasMoreResults) return;
 
@@ -266,15 +345,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     return Scaffold(
       backgroundColor: colorScheme.surface,
       
-      // ✅ FIXED: Cập nhật phần AppBar trong home_screen.dart
-      // Thay thế toàn bộ phần AppBar trong build() method
-
       appBar: AppBar(
         title: _isSearching ? _buildSearchField() : _buildTitle(),
         centerTitle: true,
         elevation: 0,
         actions: [
-          // ✅ Settings Button - Hiện trên mọi màn hình
           if (!_isSearching)
             IconButton(
               icon: const Icon(Icons.notifications_active),
@@ -290,10 +365,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
               tooltip: 'Quote of the Day',
             ),
           
-          // ✅ Theme Toggle Button
           if (!_isSearching) const ThemeToggleButton(),
 
-          // Search Button
           IconButton(
             icon: Icon(_isSearching ? Icons.close : Icons.search),
             onPressed: () {
@@ -388,7 +461,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     );
   }
   
-  /// ✅ UPDATED: Build search results with Load More button
   Widget _buildSearchResults() {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -455,7 +527,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
 
     return Column(
       children: [
-        // Search result header
         Container(
           padding: EdgeInsets.all(Responsive.padding(context, 16)),
           color: colorScheme.surfaceContainerHighest,
@@ -482,7 +553,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             padding: EdgeInsets.all(Responsive.padding(context, 16)),
             itemCount: _searchResults.length + (_hasMoreResults ? 1 : 0),
             itemBuilder: (context, index) {
-              // Show Load More button at the end
               if (index == _searchResults.length) {
                 return _buildLoadMoreButton();
               }
@@ -499,10 +569,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     );
   }
 
-  /// ✅ NEW: Build Load More button
   Widget _buildLoadMoreButton() {
     final colorScheme = Theme.of(context).colorScheme;
-    // ✅ FIXED: Removed unused textTheme variable
     
     return Container(
       margin: EdgeInsets.only(
@@ -642,9 +710,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     );
   }
 
-  // ✅ FINAL: Drawer cho tablet/desktop - giữ Settings ở đây
-  // Thay thế method _buildDrawer() trong home_screen.dart
-
   Widget _buildDrawer() {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -679,7 +744,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             ),
           ),
           
-          // Categories
           ListTile(
             leading: const Icon(Icons.category),
             title: const Text('Categories'),
@@ -690,7 +754,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             },
           ),
           
-          // Favorites
           ListTile(
             leading: const Icon(Icons.favorite),
             title: const Text('Favorites'),
@@ -703,7 +766,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
           
           const Divider(),
           
-          // ✅ Quote of the Day Settings
           ListTile(
             leading: const Icon(Icons.notifications_active),
             title: const Text('Quote of the Day'),
@@ -719,7 +781,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             },
           ),
           
-          // Theme Settings
           ListTile(
             leading: const Icon(Icons.palette),
             title: const Text('Theme Settings'),

@@ -316,4 +316,35 @@ class DatabaseHelper {
       debugPrint('🔒 Database closed');
     }
   }
+  // ✅ FIXED: Replace the existing getQuoteById method with this corrected version
+
+  /// ✅ NEW: Get quote by ID
+  /// Sử dụng cho notification navigation
+  Future<Quote?> getQuoteById(int quoteId) async {
+    try {
+      final db = await database;
+      
+      final List<Map<String, dynamic>> maps = await db.query(
+        'quotes',
+        where: 'id = ?',
+        whereArgs: [quoteId],
+      );
+      
+      if (maps.isEmpty) {
+        debugPrint('⚠️ Database: Quote with ID $quoteId not found');
+        return null;
+      }
+      
+      // Lấy thông tin quote từ map
+      // ✅ FIXED: Sử dụng Quote.fromMap() để đảm bảo consistency
+      final quote = Quote.fromMap(maps[0]);
+      
+      debugPrint('✅ Database: Loaded quote with ID $quoteId (favorite: ${quote.isFavorite})');
+      return quote;
+      
+    } catch (e) {
+      debugPrint('❌ Database: Error loading quote by ID: $e');
+      return null;
+    }
+  }
 }
