@@ -70,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     _initializeScreen();
     
     // ✅ Check for notification payload after a short delay
-    Future.delayed(const Duration(milliseconds: 1500), () {
+    Future.delayed(const Duration(milliseconds: 800), () {
       if (mounted) {
         debugPrint('🏠 Ready to check notification payload');
         _checkNotificationPayload();
