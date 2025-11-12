@@ -87,12 +87,20 @@ class Responsive {
 
   /// Card aspect ratio cho category cards
   /// Đổi thành chiều cao > chiều rộng (portrait card)
+  // static double categoryCardAspectRatio(BuildContext context) {
+  //   final w = width(context);
+  //   if (w < mobileSmall) return 0.95; // Tỷ lệ rộng:cao = 0.7 (card cao hơn)
+  //   if (w < mobile) return 0.96; // Card hơi cao. Màn ngoài fold 5
+  //   if (w < tablet) return 1; // Phone/Fold Màn trong fold 5
+  //   return 1; // Tablet/Desktop
+  // }
+
   static double categoryCardAspectRatio(BuildContext context) {
     final w = width(context);
-    if (w < mobileSmall) return 0.95; // Tỷ lệ rộng:cao = 0.7 (card cao hơn)
-    if (w < mobile) return 0.96; // Card hơi cao. Màn ngoài fold 5
-    if (w < tablet) return 1; // Phone/Fold Màn trong fold 5
-    return 1; // Tablet/Desktop
+    if (w < mobileSmall) return 0.85;  // Card dọc rõ
+    if (w < mobile) return 0.88;       // Portrait đẹp
+    if (w < tablet) return 0.90;       // Cân đối
+    return 0.8;                        // Tablet/Desktop
   }
 
   /// Card title style với line height tốt hơn

@@ -819,10 +819,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   Widget _buildScrollableCategoriesWithPager(List<Category> categories) {
     //final spacing = Responsive.gridSpacing(context);
     final columns = Responsive.gridColumns(context);
-    final padding = Responsive.padding(context, 20);
+    final padding = Responsive.padding(context, 24);
 
-    final crossAxisSpacing = Responsive.padding(context, 20);  // Ngang
-    final mainAxisSpacing = Responsive.padding(context, 8);   // Dọc
+    final crossAxisSpacing = Responsive.padding(context, 24);  // Ngang
+    final mainAxisSpacing = Responsive.padding(context, 12);   // Dọc
     final topSpacing = Responsive.padding(context, 20);        // QuotePager → Grid
     
     return CustomScrollView(
@@ -872,7 +872,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   Widget _buildHorizontalQuotePager() {
     final spacing = Responsive.gridSpacing(context);
     final columns = Responsive.gridColumns(context);
-    final padding = Responsive.padding(context, 20);
+    final padding = Responsive.padding(context, 24);
     
     final screenWidth = MediaQuery.of(context).size.width;
     final maxWidth = Responsive.maxContentWidth(context);
@@ -1088,10 +1088,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
         },
         child: Material(
           elevation: 6,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           shadowColor: colorScheme.shadow.withValues(alpha: 0.3),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -1404,10 +1404,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
               _refreshDataIfNeeded();
             }
           },
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
                   color: colorScheme.shadow.withValues(alpha: 0.2),
@@ -1417,7 +1417,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(16),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
