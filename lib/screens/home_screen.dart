@@ -1086,17 +1086,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             _refreshDataIfNeeded();
           }
         },
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: colorScheme.shadow.withValues(alpha: 0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
+        child: Material(
+          elevation: 6,
+          borderRadius: BorderRadius.circular(20),
+          shadowColor: colorScheme.shadow.withValues(alpha: 0.3),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(20),
             child: Stack(
