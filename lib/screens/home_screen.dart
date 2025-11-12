@@ -817,9 +817,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   }
 
   Widget _buildScrollableCategoriesWithPager(List<Category> categories) {
-    final spacing = Responsive.gridSpacing(context);
+    //final spacing = Responsive.gridSpacing(context);
     final columns = Responsive.gridColumns(context);
-    final padding = Responsive.padding(context, 16);
+    final padding = Responsive.padding(context, 20);
+
+    final crossAxisSpacing = Responsive.padding(context, 20);  // Ngang
+    final mainAxisSpacing = Responsive.padding(context, 8);   // Dọc
+    final topSpacing = Responsive.padding(context, 20);        // QuotePager → Grid
     
     return CustomScrollView(
       slivers: [
@@ -831,14 +835,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
           padding: EdgeInsets.only(
             left: padding,
             right: padding,
-            top: spacing,
+            top: topSpacing,
             bottom: padding,
           ),
           sliver: SliverGrid(
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: columns,
-              crossAxisSpacing: spacing,
-              mainAxisSpacing: spacing,
+              crossAxisSpacing: crossAxisSpacing,
+              mainAxisSpacing: mainAxisSpacing,
               childAspectRatio: Responsive.categoryCardAspectRatio(context),
             ),
             delegate: SliverChildBuilderDelegate(
@@ -868,7 +872,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   Widget _buildHorizontalQuotePager() {
     final spacing = Responsive.gridSpacing(context);
     final columns = Responsive.gridColumns(context);
-    final padding = Responsive.padding(context, 16);
+    final padding = Responsive.padding(context, 20);
     
     final screenWidth = MediaQuery.of(context).size.width;
     final maxWidth = Responsive.maxContentWidth(context);
@@ -902,7 +906,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             child: _buildPageIndicators(),
           ),
         
-        SizedBox(height: spacing),
+        //SizedBox(height: spacing),
       ],
     );
   }
